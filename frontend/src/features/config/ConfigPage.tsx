@@ -1,7 +1,13 @@
 import { Copy } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import SyntaxHighlighter from 'react-syntax-highlighter'
+import {
+  stackoverflowDark,
+  stackoverflowLight,
+} from 'react-syntax-highlighter/dist/esm/styles/hljs'
 
 import { useConfigQuery } from '@/apis/dashboard/queries'
+import { useThemeStore } from '@/app/theme'
 import { toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/PageShell'
 import { QueryState } from '@/components/shared/QueryState'
@@ -21,6 +27,14 @@ function BoolPill({ value }: BoolPillProps) {
     </span>
   )
 }
+
+const CODE_THEME_OVERRIDES = {
+  background: 'transparent',
+  padding: 0,
+  margin: 0,
+  fontSize: '0.875rem',
+  lineHeight: '1.6',
+} as const
 
 function toYamlLines(value: unknown, indent = 0): string[] {
   const prefix = '  '.repeat(indent)
@@ -62,6 +76,7 @@ async function copyRawConfig(value: string) {
 
 export function ConfigPage() {
   const config = useConfigQuery()
+  const resolvedTheme = useThemeStore((state) => state.resolvedTheme)
   const [format, setFormat] = useState<ConfigFormatMode>('structured')
 
   const rawJson = useMemo(() => {
@@ -76,6 +91,7 @@ export function ConfigPage() {
 
   const providerNames = config.data?.provider_names ?? []
   const hasProviders = providerNames.length > 0
+  const codeTheme = resolvedTheme === 'dark' ? stackoverflowDark : stackoverflowLight
 
   return (
     <PageShell
@@ -241,9 +257,27 @@ export function ConfigPage() {
                     <span className='sr-only'>Copy {format.toUpperCase()}</span>
                   </Button>
                 </div>
-                <pre className='text-foreground overflow-x-auto text-sm break-words whitespace-pre-wrap'>
-                  {format === 'json' ? rawJson : rawYaml}
-                </pre>
+                <div className='border-border bg-muted/20 max-h-[min(65vh,44rem)] overflow-auto rounded-2xl border px-4 py-3'>
+                  <SyntaxHighlighter
+                    language={format}
+                    style={codeTheme}
+                    customStyle={CODE_THEME_OVERRIDES}
+                    codeTagProps={{
+                      className: 'font-mono',
+                    }}
+                    wrapLongLines
+                    showLineNumbers
+                    lineNumberStyle={{
+                      minWidth: '2.25rem',
+                      paddingRight: '0.75rem',
+                      color: 'hsl(var(--muted-foreground))',
+                      opacity: 0.55,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {format === 'json' ? rawJson : rawYaml}
+                  </SyntaxHighlighter>
+                </div>
               </CardContent>
             </Card>
           )

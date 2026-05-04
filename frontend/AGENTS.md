@@ -1,6 +1,6 @@
 # Frontend Agent Guide
 
-React/Vite dashboard for Rusuh management APIs. Uses Bun, TanStack Router/Query/Form, shadcn/Radix primitives, Tailwind CSS v4, Oxc tooling, Vitest.
+React/Vite dashboard for Rusuh management APIs. Uses Bun, TanStack Router/Query/Form/Table, Zod, Zustand, shadcn/Radix primitives, Tailwind CSS v4, Oxc tooling, Vitest.
 
 ## Commands
 
