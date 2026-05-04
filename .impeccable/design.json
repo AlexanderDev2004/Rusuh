@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-05T00:00:00.000Z",
+  "title": "Design System: Rusuh",
+  "extensions": {
+    "colorMeta": {
+      "background-mist": {
+        "role": "neutral",
+        "displayName": "Mist Background",
+        "canonical": "#f6f1ff",
+        "tonalRamp": ["oklch(15% 0.02 305)", "oklch(28% 0.02 305)", "oklch(42% 0.02 305)", "oklch(56% 0.02 305)", "oklch(70% 0.02 305)", "oklch(82% 0.02 305)", "oklch(90% 0.02 305)", "oklch(96% 0.02 305)"]
+      },
+      "primary-orchid": {
+        "role": "primary",
+        "displayName": "Quiet Orchid",
+        "canonical": "#c062a8",
+        "tonalRamp": ["oklch(15% 0.10 335)", "oklch(28% 0.12 335)", "oklch(42% 0.14 335)", "oklch(56% 0.16 335)", "oklch(68% 0.14 335)", "oklch(78% 0.10 335)", "oklch(88% 0.06 335)", "oklch(95% 0.03 335)"]
+      },
+      "secondary-violet": {
+        "role": "secondary",
+        "displayName": "Routing Violet",
+        "canonical": "#b184ff",
+        "tonalRamp": ["oklch(15% 0.11 300)", "oklch(28% 0.13 300)", "oklch(42% 0.15 300)", "oklch(56% 0.17 300)", "oklch(68% 0.15 300)", "oklch(78% 0.11 300)", "oklch(88% 0.07 300)", "oklch(95% 0.03 300)"]
+      },
+      "accent-rose": {
+        "role": "secondary",
+        "displayName": "Soft Rose Signal",
+        "canonical": "#f09bd5",
+        "tonalRamp": ["oklch(15% 0.08 340)", "oklch(28% 0.10 340)", "oklch(42% 0.12 340)", "oklch(56% 0.14 340)", "oklch(70% 0.12 340)", "oklch(80% 0.09 340)", "oklch(89% 0.05 340)", "oklch(95% 0.025 340)"]
+      },
+      "foreground-plum": {
+        "role": "neutral",
+        "displayName": "Plum Ink",
+        "canonical": "#2a2148",
+        "tonalRamp": ["oklch(15% 0.04 300)", "oklch(25% 0.04 300)", "oklch(36% 0.035 300)", "oklch(48% 0.03 300)", "oklch(62% 0.025 300)", "oklch(76% 0.02 300)", "oklch(88% 0.015 300)", "oklch(95% 0.01 300)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page hero titles only." },
+      "headline": { "displayName": "Headline", "purpose": "App shell and major section headings." },
+      "title": { "displayName": "Title", "purpose": "Panel, table group, and dialog titles." },
+      "body": { "displayName": "Body", "purpose": "Primary interface copy." },
+      "label": { "displayName": "Label", "purpose": "Eyebrows, compact metadata, and sparse uppercase labels." }
+    },
+    "shadows": [
+      { "name": "panel-rest", "value": "0 10px 26px rgba(66, 45, 132, 0.16)", "purpose": "Existing dashboard panel shadow. Prefer tonal layering for new static panels." },
+      { "name": "surface-lift", "value": "0 24px 60px rgba(66, 45, 132, 0.22)", "purpose": "Large shell or overlay lift." },
+      { "name": "action-lift", "value": "0 16px 40px rgba(12, 16, 40, 0.55)", "purpose": "Existing primary button emphasis. Reduce in dense regions." }
+    ],
+    "motion": [
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Default interaction easing." },
+      { "name": "ease-out-quint", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Panel reveal and soft entrance easing." },
+      { "name": "state-transition", "value": "150ms-250ms", "purpose": "Most product state transitions." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One main action per region, using Quiet Orchid and visible focus.",
+      "html": "<button class=\"ds-btn-primary\">Add Account</button>",
+      "css": ".ds-btn-primary { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 1.25rem; padding: 0 1rem; background: var(--primary, #c062a8); color: var(--primary-foreground, #ffffff); font: 500 0.875rem/1.2 Geist, ui-sans-serif, system-ui, sans-serif; transition: transform 200ms cubic-bezier(0.25, 1, 0.5, 1), filter 200ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-primary:hover { filter: brightness(1.05); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #c062a8) 50%, transparent); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action with border-first structure and muted hover.",
+      "html": "<button class=\"ds-btn-outline\">Refresh</button>",
+      "css": ".ds-btn-outline { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border, #e2d7fb); border-radius: 1.25rem; padding: 0 1rem; background: color-mix(in srgb, var(--background, #f6f1ff) 70%, transparent); color: var(--foreground, #2a2148); font: 500 0.875rem/1.2 Geist, ui-sans-serif, system-ui, sans-serif; transition: background-color 180ms cubic-bezier(0.25, 1, 0.5, 1), transform 180ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-outline:hover { background: var(--muted, #efe7ff); } .ds-btn-outline:active { transform: translateY(1px); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #c062a8) 50%, transparent); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Rounded border-first field for secrets, filters, and config values.",
+      "html": "<input class=\"ds-input\" placeholder=\"sk-...\" />",
+      "css": ".ds-input { height: 2.75rem; width: 100%; border: 1px solid var(--input, #e2d7fb); border-radius: 1.25rem; background: color-mix(in srgb, var(--background, #f6f1ff) 70%, transparent); color: var(--foreground, #2a2148); padding: 0.5rem 1rem; font: 400 0.875rem/1.5 Geist, ui-sans-serif, system-ui, sans-serif; transition: border-color 180ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 180ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-input::placeholder { color: var(--muted-foreground, #766a98); } .ds-input:focus-visible { outline: none; border-color: var(--ring, #c062a8); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #c062a8) 50%, transparent); }"
+    },
+    {
+      "name": "Outline Badge",
+      "kind": "chip",
+      "refersTo": "badge-outline",
+      "description": "Compact count, provider, and status chip with text-first meaning.",
+      "html": "<span class=\"ds-badge\">3 providers</span>",
+      "css": ".ds-badge { min-height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; border: 1px solid var(--border, #e2d7fb); border-radius: 999px; background: color-mix(in srgb, var(--background, #f6f1ff) 40%, transparent); color: var(--foreground, #2a2148); padding: 0.25rem 0.75rem; font: 500 0.75rem/1.2 Geist, ui-sans-serif, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Dashboard Panel",
+      "kind": "card",
+      "refersTo": "card-panel",
+      "description": "Neutral container for operational data, using border and tonal fill before shadow.",
+      "html": "<section class=\"ds-panel\"><h3>Connected Providers</h3><p>Live provider connectivity.</p></section>",
+      "css": ".ds-panel { border: 1px solid var(--border, #e2d7fb); border-radius: 1.5rem; background: color-mix(in srgb, var(--card, #ffffff) 88%, transparent); color: var(--foreground, #2a2148); padding: 1.25rem; font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-panel h3 { margin: 0; font-size: 1.125rem; line-height: 1.35; font-weight: 600; } .ds-panel p { margin: 0.25rem 0 0; color: var(--muted-foreground, #766a98); font-size: 0.875rem; line-height: 1.5; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Primary orientation control with active state visible through fill, weight, and label contrast.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-item-active\">Overview</a><a class=\"ds-nav-item\">Accounts</a></nav>",
+      "css": ".ds-nav { display: grid; gap: 0.5rem; width: 16rem; font-family: Geist, ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { min-height: 2.75rem; display: flex; align-items: center; border-radius: 1rem; padding: 0 1rem; color: var(--muted-foreground, #766a98); font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background-color 180ms cubic-bezier(0.25, 1, 0.5, 1), color 180ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-nav-item:hover { background: var(--muted, #efe7ff); color: var(--foreground, #2a2148); } .ds-nav-item-active { background: var(--primary, #c062a8); color: var(--primary-foreground, #ffffff); font-weight: 600; } .ds-nav-item:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #c062a8) 50%, transparent); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Control Room",
+    "overview": "Rusuh's interface is an operator surface, not a performance. It should feel like a calm control room for shared proxy infrastructure: clear state, measured controls, and exact consequences. The design earns trust through restraint, consistent structure, and a low-noise reading environment. The current visual system has a distinct purple and rose identity, large rounded surfaces, Geist typography, soft panels, and gentle motion. Future work should preserve that identity while making it more neutral: reduce decorative gradients, avoid glass as a default, and let color mark meaning, focus, or primary action.",
+    "keyCharacteristics": [
+      "Neutral, readable surfaces with sparse orchid/violet brand accents.",
+      "Familiar product patterns: sidebar navigation, filters, tables, forms, dialogs only when necessary.",
+      "Precise labels, compact actions, and clear status vocabulary.",
+      "Gentle state motion that never delays the operator."
+    ],
+    "rules": [
+      { "name": "The Accent Ration Rule", "body": "Accent color should cover less than 10% of a normal product screen. If the page reads purple before it reads operational state, it is too loud.", "section": "colors" },
+      { "name": "The No Pure Extremes Rule", "body": "Never use pure black or pure white as a new design decision. Neutrals must stay slightly tinted toward the Rusuh palette.", "section": "colors" },
+      { "name": "The Operator Type Rule", "body": "Product text must stay readable at work speed. Do not introduce display fonts, ornamental headings, or oversized metric typography for routine dashboard information.", "section": "typography" },
+      { "name": "The Tonal First Rule", "body": "If a border and a slight surface shift can separate content, do not add a shadow.", "section": "elevation" },
+      { "name": "The No Decorative Glass Rule", "body": "Backdrop blur and translucent panels must solve a layering problem. They are forbidden as default decoration.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the product register visible: dashboard UI should serve workflows, not market itself.",
+      "Do use neutral tinted surfaces as the default, with Quiet Orchid reserved for primary actions, active navigation, focus, and rare identity moments.",
+      "Do pair every status color with text, labels, or icons so WCAG AA and color-blind use remain practical.",
+      "Do reuse existing shadcn/Radix primitives, Geist typography, CSS variables, and UI token helpers before creating new component vocabulary.",
+      "Do prefer inline/progressive management flows over modals unless focus trapping is necessary for safety."
+    ],
+    "donts": [
+      "Don't make Rusuh look like a terminal-only hacker UI: no green-on-black intimidation, no dense faux-console chrome, no cyberpunk neon.",
+      "Don't use glow-heavy glassmorphism as default decoration. Glass is allowed only for real overlay layering.",
+      "Don't add side-stripe borders, gradient text, hero-metric templates, or identical card grids.",
+      "Don't flood inactive states with saturated purple, violet, or rose.",
+      "Don't use em dashes in interface copy or design documentation. Use commas, periods, colons, or parentheses."
+    ]
+  }
+}

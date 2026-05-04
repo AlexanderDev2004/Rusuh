@@ -239,3 +239,21 @@ Recommended modules:
 ## Bottom line
 
 The important architecture from `CLIProxyAPIPlus` is that provider auth, token refresh, model discovery, and request execution are tightly coupled. Preserve that coupling in `Rusuh` instead of flattening everything into overly generic layers.
+
+## Design Context
+
+### Users
+Rusuh's frontend dashboard is primarily for small team operators: technical users who manage shared LLM/proxy infrastructure, provider accounts, runtime health, API keys, and configuration. They need to quickly understand system state, safely perform management actions, and recover from auth/provider issues without unnecessary visual noise.
+
+### Brand Personality
+Minimal, quiet, precise. The interface should feel reliable and controlled rather than flashy: calm operational confidence, clear hierarchy, and exact language for potentially sensitive auth/key/config actions.
+
+### Aesthetic Direction
+Move the existing dashboard toward a more minimal and neutral control-center feel. The current foundation uses React/Tailwind/shadcn components, Geist typography, rounded panels, light/dark/system themes, soft purple/pink accents, radial gradients, and gentle motion. Preserve the product identity and useful theme system, but reduce decorative gradient/glass intensity over time, use color primarily for meaning and focus, and keep motion subtle and purposeful. Avoid loud neon, excessive glow, playful decoration, or visual effects that compete with operational information.
+
+### Design Principles
+1. Prioritize operational clarity: status, errors, provider availability, and risky actions must be scannable and unambiguous.
+2. Keep visuals restrained: neutral surfaces first, with purple/pink brand accents used sparingly for primary actions, focus, and identity.
+3. Design for safe management: destructive/auth/config flows need clear confirmation, plain-language consequences, and strong affordances.
+4. Maintain accessibility to WCAG AA where practical: adequate contrast, keyboard operability, visible focus states, reduced-motion support, and status cues that do not rely on color alone.
+5. Preserve consistency: reuse existing shadcn/Radix components, Geist typography, CSS variables, theme store, UI token helpers, and established page/layout patterns before introducing new UI primitives.
