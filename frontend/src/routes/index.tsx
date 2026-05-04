@@ -1,13 +1,18 @@
+import type { QueryClient } from '@tanstack/react-query'
 import { createRootRoute, createRouter } from '@tanstack/react-router'
 
-import { createAccountsRoute } from './accounts/accounts-route'
-import { createAddAccountRoute } from './accounts/add-account-route'
-import { createApiKeysRoute } from './api-keys/api-keys-route'
-import { createConfigRoute } from './config/config-route'
-import { createOverviewRoute } from './overview/overview-route'
-import { RootRouteComponent } from './root-route'
+import { createAccountsRoute } from './accounts/Accounts'
+import { createAddAccountRoute } from './accounts/AddAccount'
+import { createApiKeysRoute } from './api-keys/ApiKeys'
+import { createConfigRoute } from './config/Config'
+import { createOverviewRoute } from './overview/Overview'
+import { RootRouteComponent } from './RootRoute'
 
-const rootRoute = createRootRoute({
+type RouterContext = {
+  queryClient: QueryClient
+}
+
+const rootRoute = createRootRoute<RouterContext>({
   component: RootRouteComponent,
 })
 
@@ -25,11 +30,17 @@ const routeTree = rootRoute.addChildren([
   configRoute,
 ])
 
-export const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  defaultPendingMinMs: 0,
-})
+export function createAppRouter(queryClient: QueryClient) {
+  return createRouter({
+    routeTree,
+    context: { queryClient },
+    defaultPreload: 'intent',
+    defaultPreloadStaleTime: 0,
+    defaultPendingMinMs: 0,
+  })
+}
+
+export const router = createAppRouter({} as QueryClient)
 
 declare module '@tanstack/react-router' {
   interface Register {

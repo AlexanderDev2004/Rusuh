@@ -1,22 +1,26 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
-import { StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import './index.css'
-import { createAppQueryClient } from './app/query-client'
-import { useThemeStore } from './app/theme'
-import { Toaster } from './components/ui/sonner'
-import { ManagementAuthProvider, useManagementAuth } from './features/management/management-auth'
-import { router } from './routes'
+import { createAppQueryClient } from '@/app/query_client'
+import { useThemeStore } from '@/app/theme'
+import { Toaster } from '@/components/ui/Sonner'
+import { useManagementAuth } from '@/features/auth/AuthGate'
+import { useManagementAuthStore } from '@/features/auth/store'
+import { createAppRouter } from '@/routes'
 function AppProviders() {
   const { clearSecret } = useManagementAuth()
-  const queryClient = createAppQueryClient(clearSecret)
+  const initAuth = useManagementAuthStore((state) => state.init)
+  const queryClient = useMemo(() => createAppQueryClient(clearSecret), [clearSecret])
+  const router = useMemo(() => createAppRouter(queryClient), [queryClient])
   const initTheme = useThemeStore((state) => state.initTheme)
 
   useEffect(() => {
+    initAuth()
     initTheme()
-  }, [initTheme])
+  }, [initAuth, initTheme])
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
@@ -26,8 +30,6 @@ function AppProviders() {
 }
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ManagementAuthProvider>
-      <AppProviders />
-    </ManagementAuthProvider>
+    <AppProviders />
   </StrictMode>,
 )
