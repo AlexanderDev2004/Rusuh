@@ -1,14 +1,11 @@
-export type AddAccountOauthProvider =
-  | 'kiro'
-  | 'antigravity'
-  | 'codex'
-  | 'zed'
-  | 'github-copilot'
-
-export type TrackedOauthStates = Partial<Record<AddAccountOauthProvider, string>>
+import type { AddAccountOauthProvider, TrackedOauthStates } from './add-account-page.oauth.type'
 
 export function formatOauthExpiryHint(expiresInSeconds: number | undefined): string | null {
-  if (!Number.isFinite(expiresInSeconds) || expiresInSeconds === undefined || expiresInSeconds <= 0) {
+  if (
+    !Number.isFinite(expiresInSeconds) ||
+    expiresInSeconds === undefined ||
+    expiresInSeconds <= 0
+  ) {
     return null
   }
 
@@ -37,8 +34,9 @@ export function resolveTrackedOauthSession(
   const callbackState = parseOauthStateFromRedirectUrl(redirectUrl)
 
   if (callbackState) {
-    const matchingEntry = (Object.entries(trackedStates) as Array<[AddAccountOauthProvider, string]>)
-      .find(([, trackedState]) => trackedState === callbackState)
+    const matchingEntry = (
+      Object.entries(trackedStates) as Array<[AddAccountOauthProvider, string]>
+    ).find(([, trackedState]) => trackedState === callbackState)
 
     if (matchingEntry) {
       const [matchedProvider, state] = matchingEntry

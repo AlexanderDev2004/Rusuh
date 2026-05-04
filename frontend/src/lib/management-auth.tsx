@@ -1,13 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-  type PropsWithChildren,
-} from 'react'
+import { useEffect, useState, type FormEvent, type PropsWithChildren } from 'react'
+import { create } from 'zustand'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,59 +7,74 @@ import { Input } from '@/components/ui/input'
 
 const STORAGE_KEY = 'rusuh.management-secret'
 
-type ManagementAuthContextValue = {
+type ManagementAuthState = {
   secret: string
   isUnlocked: boolean
+  initialized: boolean
+  init: () => void
   setSecret: (value: string, persist?: boolean) => void
   clearSecret: () => void
 }
 
-const ManagementAuthContext = createContext<ManagementAuthContextValue | null>(null)
+export const useManagementAuthStore = create<ManagementAuthState>((set, get) => ({
+  secret: '',
+  isUnlocked: false,
+  initialized: false,
+  init: () => {
+    if (get().initialized) {
+      return
+    }
+
+    if (typeof window === 'undefined') {
+      set({ initialized: true })
+      return
+    }
+
+    const saved = window.sessionStorage.getItem(STORAGE_KEY) ?? ''
+    set({
+      secret: saved,
+      isUnlocked: saved.trim().length > 0,
+      initialized: true,
+    })
+  },
+  setSecret: (value, persist = true) => {
+    const nextValue = value ?? ''
+    if (persist && typeof window !== 'undefined') {
+      window.sessionStorage.setItem(STORAGE_KEY, nextValue)
+    }
+
+    set({ secret: nextValue, isUnlocked: nextValue.trim().length > 0 })
+  },
+  clearSecret: () => {
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(STORAGE_KEY)
+    }
+    set({ secret: '', isUnlocked: false })
+  },
+}))
 
 export function ManagementAuthProvider({ children }: PropsWithChildren) {
-  const [secret, setSecretState] = useState('')
+  const init = useManagementAuthStore((state) => state.init)
 
   useEffect(() => {
-    const saved = window.sessionStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      setSecretState(saved)
-    }
-  }, [])
+    init()
+  }, [init])
 
-  const setSecret = useCallback((value: string, persist = true) => {
-    setSecretState(value)
-
-    if (persist) {
-      window.sessionStorage.setItem(STORAGE_KEY, value)
-    }
-  }, [])
-
-  const clearSecret = useCallback(() => {
-    setSecretState('')
-    window.sessionStorage.removeItem(STORAGE_KEY)
-  }, [])
-
-  const value = useMemo(
-    () => ({
-      secret,
-      isUnlocked: secret.trim().length > 0,
-      setSecret,
-      clearSecret,
-    }),
-    [clearSecret, secret, setSecret],
-  )
-
-  return <ManagementAuthContext.Provider value={value}>{children}</ManagementAuthContext.Provider>
+  return <>{children}</>
 }
 
 export function useManagementAuth() {
-  const context = useContext(ManagementAuthContext)
+  const secret = useManagementAuthStore((state) => state.secret)
+  const isUnlocked = useManagementAuthStore((state) => state.isUnlocked)
+  const setSecret = useManagementAuthStore((state) => state.setSecret)
+  const clearSecret = useManagementAuthStore((state) => state.clearSecret)
 
-  if (!context) {
-    throw new Error('useManagementAuth must be used inside ManagementAuthProvider')
+  return {
+    secret,
+    isUnlocked,
+    setSecret,
+    clearSecret,
   }
-
-  return context
 }
 
 export function ManagementAuthGate({ children }: PropsWithChildren) {

@@ -26,19 +26,16 @@ import {
   useStartOAuthMutation,
   useSubmitOAuthCallbackMutation,
 } from '../../lib/management-oauth'
-import {
-  useStartZedLoginMutation,
-  useZedLoginStatusQuery,
-} from '../../lib/management-zed'
+import { useStartZedLoginMutation, useZedLoginStatusQuery } from '../../lib/management-zed'
 import { buildOAuthTerminalFeedback } from '../../lib/oauth-feedback'
 import { toastError, toastInfo, toastSuccess } from '../../lib/toast'
-import {
-  formatOauthExpiryHint,
-  resolveTrackedOauthSession,
-  type AddAccountOauthProvider,
-  type TrackedOauthStates,
-} from './add-account-page.oauth'
 import { PageShell } from '../page-shell'
+import { formatOauthExpiryHint, resolveTrackedOauthSession } from './add-account-page.oauth'
+import type {
+  AddAccountOauthProvider,
+  KiroImportMode,
+  TrackedOauthStates,
+} from './add-account-page.type'
 
 const MAX_LABEL_LENGTH = 200
 const MAX_UPLOAD_NAME_LENGTH = 200
@@ -80,7 +77,7 @@ export function AddAccountPage() {
   const [copilotExpiresIn, setCopilotExpiresIn] = useState<number | undefined>()
 
   const [kiroLabel, setKiroLabel] = useState('')
-  const [kiroImportMode, setKiroImportMode] = useState<'structured' | 'json'>('structured')
+  const [kiroImportMode, setKiroImportMode] = useState<KiroImportMode>('structured')
   const [kiroImportJson, setKiroImportJson] = useState('')
   const [kiroAccessToken, setKiroAccessToken] = useState('')
   const [kiroRefreshToken, setKiroRefreshToken] = useState('')
@@ -359,7 +356,8 @@ export function AddAccountPage() {
                   {activeOauthState ? (
                     <>
                       <p>
-                        Session ID <span className='text-foreground break-all'>{activeOauthState}</span>
+                        Session ID{' '}
+                        <span className='text-foreground break-all'>{activeOauthState}</span>
                       </p>
                       <p>
                         Status <span className='text-foreground'>{activeOauthStatusSummary}</span>
@@ -386,7 +384,7 @@ export function AddAccountPage() {
                     value={kiroImportMode}
                     onValueChange={(value) => setKiroImportMode(value as 'structured' | 'json')}
                   >
-                     <SelectTrigger className='h-11 w-[180px] rounded-full'>
+                    <SelectTrigger className='h-11 w-[180px] rounded-full'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -396,14 +394,14 @@ export function AddAccountPage() {
                   </Select>
                 </div>
 
-                 <Input
-                   type='text'
-                   value={kiroLabel}
-                   onChange={(event) => setKiroLabel(event.target.value)}
-                   placeholder='Optional label'
-                   maxLength={MAX_LABEL_LENGTH}
-                   className='h-11 rounded-2xl'
-                 />
+                <Input
+                  type='text'
+                  value={kiroLabel}
+                  onChange={(event) => setKiroLabel(event.target.value)}
+                  placeholder='Optional label'
+                  maxLength={MAX_LABEL_LENGTH}
+                  className='h-11 rounded-2xl'
+                />
 
                 {kiroImportMode === 'structured' ? (
                   <div className='grid gap-3 lg:grid-cols-2'>
@@ -495,7 +493,7 @@ export function AddAccountPage() {
                       }
                     }}
                     disabled={importKiro.isPending}
-                     className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {importKiro.isPending ? 'Importing…' : 'Import Kiro auth'}
                   </Button>
@@ -509,12 +507,12 @@ export function AddAccountPage() {
                     Use this only if you already have a refresh token.
                   </p>
                 </div>
-                 <Textarea
-                   value={kiroSocialRefreshToken}
-                   onChange={(event) => setKiroSocialRefreshToken(event.target.value)}
-                   placeholder='aorAAAAAG...'
-                   className='min-h-24 rounded-2xl px-4 py-3'
-                 />
+                <Textarea
+                  value={kiroSocialRefreshToken}
+                  onChange={(event) => setKiroSocialRefreshToken(event.target.value)}
+                  placeholder='aorAAAAAG...'
+                  className='min-h-24 rounded-2xl px-4 py-3'
+                />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
@@ -535,7 +533,7 @@ export function AddAccountPage() {
                       )
                     }
                     disabled={importKiroSocial.isPending}
-                   className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {importKiroSocial.isPending ? 'Importing…' : 'Import social token'}
                   </Button>
@@ -552,14 +550,14 @@ export function AddAccountPage() {
               </section>
 
               <section className='max-w-xl space-y-4'>
-                 <Input
-                   type='text'
-                   value={antigravityLabel}
-                   onChange={(event) => setAntigravityLabel(event.target.value)}
-                   className='h-11 rounded-2xl'
-                   placeholder='Optional label'
-                   maxLength={MAX_LABEL_LENGTH}
-                 />
+                <Input
+                  type='text'
+                  value={antigravityLabel}
+                  onChange={(event) => setAntigravityLabel(event.target.value)}
+                  className='h-11 rounded-2xl'
+                  placeholder='Optional label'
+                  maxLength={MAX_LABEL_LENGTH}
+                />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
@@ -571,7 +569,10 @@ export function AddAccountPage() {
                         },
                         {
                           onSuccess: (data) => {
-                            setOauthStates((prev) => ({ ...prev, [data.provider as AddAccountOauthProvider]: data.state }))
+                            setOauthStates((prev) => ({
+                              ...prev,
+                              [data.provider as AddAccountOauthProvider]: data.state,
+                            }))
                             setAntigravityAuthUrl(data.url ?? '')
                             toastSuccess(
                               'Antigravity OAuth link ready',
@@ -585,7 +586,7 @@ export function AddAccountPage() {
                       )
                     }
                     disabled={startOAuth.isPending}
-                     className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {startOAuth.isPending ? 'Generating link…' : 'Start OAuth'}
                   </Button>
@@ -596,12 +597,12 @@ export function AddAccountPage() {
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
                     <Input value={antigravityAuthUrl} readOnly className='h-11 rounded-2xl' />
                     <div className='flex justify-end'>
-                     <Button
-                       asChild
-                       type='button'
-                       variant='outline'
-                       className='h-11 rounded-full px-5'
-                     >
+                      <Button
+                        asChild
+                        type='button'
+                        variant='outline'
+                        className='h-11 rounded-full px-5'
+                      >
                         <a href={antigravityAuthUrl} target='_blank' rel='noopener noreferrer'>
                           Open login link
                         </a>
@@ -654,7 +655,7 @@ export function AddAccountPage() {
                       disabled={
                         submitOAuthCallback.isPending || antigravityCallbackUrl.trim().length === 0
                       }
-                     className='h-11 rounded-full px-5'
+                      className='h-11 rounded-full px-5'
                     >
                       {submitOAuthCallback.isPending ? 'Submitting…' : 'Submit callback URL'}
                     </Button>
@@ -672,14 +673,14 @@ export function AddAccountPage() {
               </section>
 
               <section className='max-w-xl space-y-4'>
-                 <Input
-                   type='text'
-                   value={codexLabel}
-                   onChange={(event) => setCodexLabel(event.target.value)}
-                   className='h-11 rounded-2xl'
-                   placeholder='Optional label'
-                   maxLength={MAX_LABEL_LENGTH}
-                 />
+                <Input
+                  type='text'
+                  value={codexLabel}
+                  onChange={(event) => setCodexLabel(event.target.value)}
+                  className='h-11 rounded-2xl'
+                  placeholder='Optional label'
+                  maxLength={MAX_LABEL_LENGTH}
+                />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
@@ -691,7 +692,10 @@ export function AddAccountPage() {
                         },
                         {
                           onSuccess: (data) => {
-                            setOauthStates((prev) => ({ ...prev, [data.provider as AddAccountOauthProvider]: data.state }))
+                            setOauthStates((prev) => ({
+                              ...prev,
+                              [data.provider as AddAccountOauthProvider]: data.state,
+                            }))
                             setCodexAuthUrl(data.url ?? '')
                             toastSuccess(
                               'Codex OAuth link ready',
@@ -705,7 +709,7 @@ export function AddAccountPage() {
                       )
                     }
                     disabled={startOAuth.isPending}
-                     className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {startOAuth.isPending ? 'Generating link…' : 'Start OAuth'}
                   </Button>
@@ -716,12 +720,12 @@ export function AddAccountPage() {
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
                     <Input value={codexAuthUrl} readOnly className='h-11 rounded-2xl' />
                     <div className='flex justify-end'>
-                     <Button
-                       asChild
-                       type='button'
-                       variant='outline'
-                       className='h-11 rounded-full px-5'
-                     >
+                      <Button
+                        asChild
+                        type='button'
+                        variant='outline'
+                        className='h-11 rounded-full px-5'
+                      >
                         <a href={codexAuthUrl} target='_blank' rel='noopener noreferrer'>
                           Open login link
                         </a>
@@ -774,7 +778,7 @@ export function AddAccountPage() {
                       disabled={
                         submitOAuthCallback.isPending || codexCallbackUrl.trim().length === 0
                       }
-                     className='h-11 rounded-full px-5'
+                      className='h-11 rounded-full px-5'
                     >
                       {submitOAuthCallback.isPending ? 'Submitting…' : 'Submit callback URL'}
                     </Button>
@@ -787,19 +791,20 @@ export function AddAccountPage() {
               <section className='space-y-3'>
                 <h3 className='text-lg font-semibold'>Zed</h3>
                 <p className='text-muted-foreground max-w-2xl text-sm'>
-                  Start the native-app sign-in flow here, then review the account on the Accounts page.
+                  Start the native-app sign-in flow here, then review the account on the Accounts
+                  page.
                 </p>
               </section>
 
               <section className='max-w-xl space-y-4'>
-                 <Input
-                   type='text'
-                   value={zedLabel}
-                   onChange={(event) => setZedLabel(event.target.value)}
-                   className='h-11 rounded-2xl'
-                   placeholder='Optional label'
-                   maxLength={MAX_LABEL_LENGTH}
-                 />
+                <Input
+                  type='text'
+                  value={zedLabel}
+                  onChange={(event) => setZedLabel(event.target.value)}
+                  className='h-11 rounded-2xl'
+                  placeholder='Optional label'
+                  maxLength={MAX_LABEL_LENGTH}
+                />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
@@ -824,7 +829,7 @@ export function AddAccountPage() {
                       )
                     }
                     disabled={startZedLogin.isPending}
-                     className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {startZedLogin.isPending ? 'Launching…' : 'Start Zed login'}
                   </Button>
@@ -835,15 +840,17 @@ export function AddAccountPage() {
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
                     <Input value={zedLoginUrl} readOnly className='h-11 rounded-2xl' />
                     {zedPort ? (
-                      <p className='text-muted-foreground text-sm'>Native app callback port: {zedPort}</p>
+                      <p className='text-muted-foreground text-sm'>
+                        Native app callback port: {zedPort}
+                      </p>
                     ) : null}
                     <div className='flex justify-end'>
-                     <Button
-                       asChild
-                       type='button'
-                       variant='outline'
-                       className='h-11 rounded-full px-5'
-                     >
+                      <Button
+                        asChild
+                        type='button'
+                        variant='outline'
+                        className='h-11 rounded-full px-5'
+                      >
                         <a href={zedLoginUrl} target='_blank' rel='noopener noreferrer'>
                           Open login link
                         </a>
@@ -856,19 +863,26 @@ export function AddAccountPage() {
                   {activeOauthState ? (
                     <>
                       <p>
-                        Session ID <span className='text-foreground break-all'>{activeOauthState}</span>
+                        Session ID{' '}
+                        <span className='text-foreground break-all'>{activeOauthState}</span>
                       </p>
                       <p>
                         Status <span className='text-foreground'>{activeOauthStatusSummary}</span>
                       </p>
                       {zedLoginStatus.data?.filename ? (
                         <p>
-                          Auth file <span className='text-foreground break-all'>{zedLoginStatus.data.filename}</span>
+                          Auth file{' '}
+                          <span className='text-foreground break-all'>
+                            {zedLoginStatus.data.filename}
+                          </span>
                         </p>
                       ) : null}
                       {zedLoginStatus.data?.user_id ? (
                         <p>
-                          User ID <span className='text-foreground break-all'>{zedLoginStatus.data.user_id}</span>
+                          User ID{' '}
+                          <span className='text-foreground break-all'>
+                            {zedLoginStatus.data.user_id}
+                          </span>
                         </p>
                       ) : null}
                     </>
@@ -891,14 +905,14 @@ export function AddAccountPage() {
               </section>
 
               <section className='max-w-xl space-y-4'>
-                 <Input
-                   type='text'
-                   value={copilotLabel}
-                   onChange={(event) => setCopilotLabel(event.target.value)}
-                   className='h-11 rounded-2xl'
-                   placeholder='Optional label'
-                   maxLength={MAX_LABEL_LENGTH}
-                 />
+                <Input
+                  type='text'
+                  value={copilotLabel}
+                  onChange={(event) => setCopilotLabel(event.target.value)}
+                  className='h-11 rounded-2xl'
+                  placeholder='Optional label'
+                  maxLength={MAX_LABEL_LENGTH}
+                />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
@@ -929,7 +943,7 @@ export function AddAccountPage() {
                       )
                     }
                     disabled={startOAuth.isPending}
-                     className='h-11 rounded-full px-5'
+                    className='h-11 rounded-full px-5'
                   >
                     {startOAuth.isPending ? 'Starting…' : 'Start OAuth'}
                   </Button>
@@ -937,34 +951,24 @@ export function AddAccountPage() {
 
                 {copilotUserCode ? (
                   <div className='dashboard-panel space-y-3 rounded-2xl p-4'>
-                    <p className='text-muted-foreground text-sm'>
-                      Enter this code on GitHub:
-                    </p>
+                    <p className='text-muted-foreground text-sm'>Enter this code on GitHub:</p>
                     <Input
                       value={copilotUserCode}
                       readOnly
                       className='h-11 rounded-2xl text-center font-mono text-lg font-semibold'
                     />
-                    <Input
-                      value={copilotVerificationUri}
-                      readOnly
-                      className='h-11 rounded-2xl'
-                    />
+                    <Input value={copilotVerificationUri} readOnly className='h-11 rounded-2xl' />
                     {copilotExpiryHint ? (
                       <p className='text-muted-foreground text-sm'>{copilotExpiryHint}</p>
                     ) : null}
                     <div className='flex justify-end'>
-                     <Button
-                       asChild
-                       type='button'
-                       variant='outline'
-                       className='h-11 rounded-full px-5'
-                     >
-                        <a
-                          href={copilotVerificationUri}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
+                      <Button
+                        asChild
+                        type='button'
+                        variant='outline'
+                        className='h-11 rounded-full px-5'
+                      >
+                        <a href={copilotVerificationUri} target='_blank' rel='noopener noreferrer'>
                           Open GitHub
                         </a>
                       </Button>
@@ -976,7 +980,8 @@ export function AddAccountPage() {
                   {activeOauthState ? (
                     <>
                       <p>
-                        Session ID <span className='text-foreground break-all'>{activeOauthState}</span>
+                        Session ID{' '}
+                        <span className='text-foreground break-all'>{activeOauthState}</span>
                       </p>
                       <p>
                         Status <span className='text-foreground'>{activeOauthStatusSummary}</span>

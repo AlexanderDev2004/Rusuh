@@ -206,7 +206,11 @@ body {
 }
 
 .dashboard-sidebar {
-  background: linear-gradient(180deg, var(--sidebar), color-mix(in srgb, var(--sidebar) 88%, transparent));
+  background: linear-gradient(
+    180deg,
+    var(--sidebar),
+    color-mix(in srgb, var(--sidebar) 88%, transparent)
+  );
   border-right: 1px solid var(--surface-border);
   box-shadow: inset -1px 0 0 color-mix(in srgb, var(--border) 35%, transparent);
 }

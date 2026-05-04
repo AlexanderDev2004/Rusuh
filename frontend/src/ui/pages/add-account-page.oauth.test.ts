@@ -4,8 +4,8 @@ import {
   formatOauthExpiryHint,
   parseOauthStateFromRedirectUrl,
   resolveTrackedOauthSession,
-  type TrackedOauthStates,
 } from './add-account-page.oauth'
+import type { TrackedOauthStates } from './add-account-page.oauth.type'
 
 describe('add-account-page OAuth session helpers', () => {
   test('keeps tracked OAuth states independent per provider', () => {
