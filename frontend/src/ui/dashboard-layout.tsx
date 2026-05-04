@@ -1,6 +1,6 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { LaptopMinimal, Moon, Sun } from 'lucide-react'
-import { type PropsWithChildren, useState } from 'react'
+import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,42 +18,117 @@ const navItems = [
   { to: '/config', label: 'Config' },
 ] as const
 
-type ThemeSegmentedControlProps = {
+const themeOptions = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: LaptopMinimal },
+] as const
+
+type ThemeMenuProps = {
   theme: 'light' | 'dark' | 'system'
-  onChange: (theme: 'light' | 'dark' | 'system') => void
+  resolvedTheme: 'light' | 'dark'
+  setTheme: (value: 'light' | 'dark' | 'system') => void
+  align?: 'left' | 'right'
+  direction?: 'up' | 'down'
 }
 
-function ThemeSegmentedControl({ theme, onChange }: ThemeSegmentedControlProps) {
-  const options = [
-    { value: 'light' as const, label: 'Light', icon: Sun },
-    { value: 'dark' as const, label: 'Dark', icon: Moon },
-    { value: 'system' as const, label: 'System', icon: LaptopMinimal },
-  ]
+function ThemeMenu({
+  theme,
+  resolvedTheme,
+  setTheme,
+  align = 'left',
+  direction = 'down',
+}: ThemeMenuProps) {
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    const handlePointer = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+
+    window.addEventListener('pointerdown', handlePointer)
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('pointerdown', handlePointer)
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [open])
+
+  const ActiveIcon = theme === 'system' ? LaptopMinimal : theme === 'dark' ? Moon : Sun
+  const menuPositionClass = align === 'right' ? 'right-0' : 'left-0'
+  const menuDirectionClass = direction === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+  const label = theme === 'system' ? `System (${resolvedTheme})` : theme
 
   return (
-    <div className='dashboard-sidebar-pill inline-flex w-fit max-w-full items-center gap-1 overflow-hidden rounded-full p-1 ring-1 ring-border/60'>
-      {options.map((option) => {
-        const Icon = option.icon
-        const active = theme === option.value
-        return (
-          <Button
-            key={option.value}
-            type='button'
-            variant='ghost'
-            size='icon-sm'
-            onClick={() => onChange(option.value)}
-            className={cn(
-              'shrink rounded-full',
-              active
-                ? 'bg-background text-foreground ring-border/70 shadow-sm ring-1'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <Icon className='size-4 shrink-0' />
-            <span className='sr-only'>{option.label} mode</span>
-          </Button>
-        )
-      })}
+    <div ref={wrapperRef} className='relative'>
+      <Button
+        type='button'
+        variant='outline'
+        size='icon'
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup='menu'
+        aria-expanded={open}
+        className='dashboard-sidebar-pill h-10 w-10 rounded-full'
+      >
+        <ActiveIcon className='size-4' />
+        <span className='sr-only'>Theme: {label}</span>
+      </Button>
+      {open ? (
+        <div
+          role='menu'
+          className={cn(
+            'dashboard-panel border-border/60 bg-background/95 absolute z-40 w-44 rounded-2xl border p-2 shadow-[0_22px_40px_rgba(6,8,20,0.45)] backdrop-blur',
+            menuPositionClass,
+            menuDirectionClass,
+          )}
+        >
+          {themeOptions.map((option) => {
+            const selected = option.value === theme
+            const Icon = option.icon
+            return (
+              <button
+                key={option.value}
+                type='button'
+                role='menuitem'
+                onClick={() => {
+                  setTheme(option.value)
+                  setOpen(false)
+                }}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition',
+                  selected
+                    ? 'bg-primary/90 text-white shadow-[0_12px_30px_rgba(12,16,40,0.35)]'
+                    : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex size-7 items-center justify-center rounded-full border',
+                    selected
+                      ? 'border-white/50 bg-white/15 text-white'
+                      : 'border-border/60 bg-muted/40 text-foreground',
+                  )}
+                >
+                  <Icon className='size-4' />
+                </span>
+                <span className='flex-1 text-left'>{option.label}</span>
+                {selected ? <span className='text-xs'>●</span> : null}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -69,19 +144,6 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
   const theme = useThemeStore((state) => state.theme)
   const resolvedTheme = useThemeStore((state) => state.resolvedTheme)
   const setTheme = useThemeStore((state) => state.setTheme)
-  const toggleTheme = useThemeStore((state) => state.toggleTheme)
-
-  const cycleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark')
-      return
-    }
-    if (theme === 'dark') {
-      setTheme('system')
-      return
-    }
-    setTheme('light')
-  }
 
   const providerCount = overview.data?.provider_names.length ?? 0
   return (
@@ -106,7 +168,7 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
                   className={cn(
                     'flex min-h-11 w-full items-center rounded-2xl px-4 text-left text-sm font-medium transition-colors',
                     active
-                      ? 'bg-primary text-white font-semibold shadow-[0_16px_40px_rgba(12,16,40,0.45)]'
+                      ? 'bg-primary font-semibold text-white shadow-[0_16px_40px_rgba(12,16,40,0.45)]'
                       : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                   )}
                   activeOptions={{ exact: item.to === '/' }}
@@ -117,7 +179,7 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
             })}
           </nav>
           <div className='dashboard-sidebar-footer space-y-3'>
-            <div className='text-xs space-y-1'>
+            <div className='space-y-1 text-xs'>
               <p className='dashboard-sidebar-meta'>
                 {overview.data
                   ? `${overview.data.health.status} · ${overview.data.routing_strategy}`
@@ -145,14 +207,15 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
               </Badge>
             </div>
             <div className='grid gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={cycleTheme}
-                className='dashboard-sidebar-button w-full'
-              >
-                Theme ({theme === 'system' ? `system ${resolvedTheme}` : theme})
-              </Button>
+              <div className='flex items-center gap-2'>
+                <ThemeMenu
+                  theme={theme}
+                  resolvedTheme={resolvedTheme}
+                  setTheme={setTheme}
+                  direction='up'
+                />
+                <span className='text-muted-foreground text-xs'>Theme</span>
+              </div>
               <Button
                 type='button'
                 variant='destructive'
@@ -174,24 +237,21 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
                 <h1 className='mt-1 text-lg font-semibold'>Control Center</h1>
               </div>
               <div className='flex items-center justify-end gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={clearSecret}
-                className='rounded-full px-4'
-              >
-                Lock
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={cycleTheme}
-                className='rounded-full px-4'
-              >
-                Theme ({theme === 'system' ? `system ${resolvedTheme}` : theme})
-              </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={clearSecret}
+                  className='rounded-full px-4'
+                >
+                  Lock
+                </Button>
+                <ThemeMenu
+                  theme={theme}
+                  resolvedTheme={resolvedTheme}
+                  setTheme={setTheme}
+                  align='right'
+                />
                 <Button
                   type='button'
                   size='sm'
@@ -217,7 +277,7 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
                         className={cn(
                           'flex min-h-11 items-center rounded-2xl px-4 text-sm font-medium transition-colors',
                           active
-                            ? 'bg-primary text-white font-semibold'
+                            ? 'bg-primary font-semibold text-white'
                             : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
                         )}
                         activeOptions={{ exact: item.to === '/' }}
@@ -248,7 +308,7 @@ export function DashboardLayout({ children }: PropsWithChildren<object>) {
             ) : null}
           </div>
 
-          <main className='dashboard-enter dashboard-enter-delay-1 flex-1 px-2 pb-4 pt-4 md:px-4 md:pb-6 md:pt-6 xl:px-6 xl:pt-8'>
+          <main className='dashboard-enter dashboard-enter-delay-1 flex-1 px-2 pt-4 pb-4 md:px-4 md:pt-6 md:pb-6 xl:px-6 xl:pt-8'>
             {children}
           </main>
         </div>

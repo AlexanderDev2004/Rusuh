@@ -8,8 +8,9 @@ import { useConfigQuery } from '../../lib/query'
 import { PageShell } from '../page-shell'
 import { QueryState } from '../query-state'
 import { statusTone } from '../status-tone'
+import type { BoolPillProps, ConfigFormatMode } from './config-page.type'
 
-function BoolPill({ value }: { value: boolean }) {
+function BoolPill({ value }: BoolPillProps) {
   return (
     <span
       className={`rounded-full border px-2.5 py-1 text-xs ${statusTone(value ? 'active' : 'disabled')}`}
@@ -58,7 +59,7 @@ function toYamlLines(value: unknown, indent = 0): string[] {
 
 export function ConfigPage() {
   const config = useConfigQuery()
-  const [format, setFormat] = useState<'structured' | 'json' | 'yaml'>('structured')
+  const [format, setFormat] = useState<ConfigFormatMode>('structured')
 
   const rawJson = useMemo(() => {
     if (!config.data) return ''
@@ -78,19 +79,19 @@ export function ConfigPage() {
       eyebrow='Config'
       title='Runtime Configuration'
       description='Settings, providers, and API entries at a glance.'
-        actions={
-          <div className='dashboard-panel grid grid-cols-1 gap-2 rounded-2xl p-1 sm:w-fit sm:grid-cols-3 lg:self-center'>
-            {(['structured', 'json', 'yaml'] as const).map((value) => (
-              <Button
-                key={value}
-                type='button'
-                variant={format === value ? 'default' : 'ghost'}
-                onClick={() => setFormat(value)}
-                className='h-11 rounded-full px-5 capitalize'
-              >
-                {value}
-              </Button>
-            ))}
+      actions={
+        <div className='dashboard-panel grid grid-cols-1 gap-2 rounded-2xl p-1 sm:w-fit sm:grid-cols-3 lg:self-center'>
+          {(['structured', 'json', 'yaml'] as const).map((value) => (
+            <Button
+              key={value}
+              type='button'
+              variant={format === value ? 'default' : 'ghost'}
+              onClick={() => setFormat(value)}
+              className='h-11 rounded-full px-5 capitalize'
+            >
+              {value}
+            </Button>
+          ))}
         </div>
       }
     >
@@ -104,7 +105,7 @@ export function ConfigPage() {
             <div className='space-y-5'>
               <div className='grid gap-5 sm:grid-cols-2 xl:grid-cols-4'>
                 <div className='dashboard-panel rounded-2xl p-4'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>
+                  <p className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
                     Listen address
                   </p>
                   <p className='text-foreground mt-2 text-lg font-semibold break-all'>
@@ -112,7 +113,7 @@ export function ConfigPage() {
                   </p>
                 </div>
                 <div className='dashboard-panel rounded-2xl p-4'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>
+                  <p className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
                     Routing method
                   </p>
                   <p className='text-foreground mt-2 text-lg font-semibold'>
@@ -120,7 +121,7 @@ export function ConfigPage() {
                   </p>
                 </div>
                 <div className='dashboard-panel rounded-2xl p-4'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>
+                  <p className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
                     Providers
                   </p>
                   <p className='text-foreground mt-2 text-lg font-semibold'>
@@ -128,7 +129,7 @@ export function ConfigPage() {
                   </p>
                 </div>
                 <div className='dashboard-panel rounded-2xl p-4'>
-                  <p className='text-muted-foreground text-xs uppercase tracking-[0.2em]'>
+                  <p className='text-muted-foreground text-xs tracking-[0.2em] uppercase'>
                     API keys
                   </p>
                   <p className='text-foreground mt-2 text-lg font-semibold'>
@@ -197,7 +198,7 @@ export function ConfigPage() {
                 <section className='space-y-4'>
                   <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                     <div>
-                    <h3 className='text-lg font-semibold'>Configured providers</h3>
+                      <h3 className='text-lg font-semibold'>Configured providers</h3>
                       <p className='text-muted-foreground mt-1 text-sm'>
                         Configured providers and key inventories.
                       </p>

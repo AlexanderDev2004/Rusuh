@@ -1,4 +1,6 @@
-import type { PropsWithChildren, ReactNode } from 'react'
+import type { PropsWithChildren } from 'react'
+
+import type { PageShellProps } from './page-shell.type'
 
 export function PageShell({
   eyebrow,
@@ -6,12 +8,7 @@ export function PageShell({
   description,
   actions,
   children,
-}: PropsWithChildren<{
-  eyebrow: string
-  title: string
-  description: string
-  actions?: ReactNode
-}>) {
+}: PropsWithChildren<PageShellProps>) {
   return (
     <>
       <header className='dashboard-enter page-hero dashboard-surface relative overflow-hidden rounded-[2.2rem] p-6 md:rounded-[2.8rem] md:p-8'>

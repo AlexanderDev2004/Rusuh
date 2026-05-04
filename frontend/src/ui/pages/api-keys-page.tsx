@@ -10,11 +10,7 @@ import { useManagementAuth } from '../../lib/management-auth'
 import { queryKeys, useApiKeysQuery } from '../../lib/query'
 import { PageShell } from '../page-shell'
 import { QueryState } from '../query-state'
-
-type ApiKeysResponse = {
-  'api-keys': string[]
-  generated?: string[]
-}
+import type { ApiKeysResponse } from './api-keys-page.type'
 
 const MAX_KEY_LENGTH = 400
 
@@ -133,7 +129,7 @@ export function ApiKeysPage() {
       >
         {apiKeys.data ? (
           <div className='space-y-6'>
-               <div className='space-y-6'>
+            <div className='space-y-6'>
               <div className='flex flex-col gap-2'>
                 <p className='text-muted-foreground text-sm'>
                   {apiKeys.data.total} key{apiKeys.data.total === 1 ? '' : 's'} ·{' '}
@@ -148,7 +144,7 @@ export function ApiKeysPage() {
                 ) : null}
               </div>
 
-               <div className='grid gap-7 xl:grid-cols-2'>
+              <div className='grid gap-7 xl:grid-cols-2'>
                 <section className='space-y-3'>
                   <div>
                     <h3 className='text-lg font-semibold'>Create key</h3>
@@ -196,22 +192,21 @@ export function ApiKeysPage() {
                       {hasKeys ? 'Ready to rotate' : 'No keys yet'}
                     </Badge>
                   </div>
-                   {!hasKeys ? (
-                     <div className='dashboard-panel text-muted-foreground rounded-2xl p-4 text-sm'>
-                       No API keys yet. Generate one key to let clients connect to the proxy.
-                     </div>
-                   ) : null}
+                  {!hasKeys ? (
+                    <div className='dashboard-panel text-muted-foreground rounded-2xl p-4 text-sm'>
+                      No API keys yet. Generate one key to let clients connect to the proxy.
+                    </div>
+                  ) : null}
 
                   <div className='space-y-3'>
                     {apiKeys.data.items.map((item, index) => (
-                      <div
-                        key={`${item}-${index}`}
-                        className='dashboard-panel rounded-2xl p-4'
-                      >
+                      <div key={`${item}-${index}`} className='dashboard-panel rounded-2xl p-4'>
                         <div className='flex flex-col gap-3'>
-                           <div className='flex items-start justify-between gap-3'>
+                          <div className='flex items-start justify-between gap-3'>
                             <div>
-                              <p className='text-foreground text-sm font-semibold'>Key #{index + 1}</p>
+                              <p className='text-foreground text-sm font-semibold'>
+                                Key #{index + 1}
+                              </p>
                               <p className='text-muted-foreground mt-1 text-xs'>
                                 sk_•••{item.slice(-6)}
                               </p>

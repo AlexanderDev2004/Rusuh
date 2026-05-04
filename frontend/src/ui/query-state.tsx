@@ -1,18 +1,8 @@
-import type { ReactNode } from 'react'
-
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
-export function QueryState({
-  isLoading,
-  isError,
-  error,
-  children,
-}: {
-  isLoading: boolean
-  isError: boolean
-  error: Error | null
-  children: ReactNode
-}) {
+import type { QueryStateProps } from './query-state.type'
+
+export function QueryState({ isLoading, isError, error, children }: QueryStateProps) {
   if (isLoading) {
     return (
       <div className='dashboard-loading dashboard-panel text-muted-foreground rounded-3xl p-8 text-sm'>
