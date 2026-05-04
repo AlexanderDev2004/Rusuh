@@ -1,8 +1,1 @@
-import type { ReactNode } from 'react'
-
-export type QueryStateProps = {
-  isLoading: boolean
-  isError: boolean
-  error: Error | null
-  children: ReactNode
-}
+export type { QueryStateProps } from '@/shared/query-state.type'

@@ -1,11 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-import { toastError, toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/page-shell'
 import { QueryState } from '@/components/shared/query-state'
-import { statusTone } from '@/components/shared/status-tone'
-import { cardClass } from '@/components/shared/ui-tokens'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +28,9 @@ import {
   useDeleteAuthFileMutation,
   useManagementAuthFilesQuery,
 } from '@/features/management/auth-files'
+import { statusTone } from '@/shared/status-tone'
+import { toastError, toastSuccess } from '@/shared/toast'
+import { cardClass } from '@/shared/ui-tokens'
 
 import type { ProviderGroup } from './accounts-page.type'
 

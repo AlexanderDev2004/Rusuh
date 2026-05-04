@@ -2,12 +2,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
-import { queryKeys, useOverviewQuery } from '@/api/dashboard-queries'
 import { PageShell } from '@/components/layout/page-shell'
 import { QueryState } from '@/components/shared/query-state'
-import { statusTone } from '@/components/shared/status-tone'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { queryKeys, useOverviewQuery } from '@/shared/api/dashboard-queries'
+import { statusTone } from '@/shared/status-tone'
 
 import type { OverviewProviderCard, OverviewSummaryRow, StatusChip } from './overview-page.type'
 

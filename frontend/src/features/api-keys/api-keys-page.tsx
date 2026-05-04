@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { queryKeys, useApiKeysQuery } from '@/api/dashboard-queries'
 import { PageShell } from '@/components/layout/page-shell'
 import { QueryState } from '@/components/shared/query-state'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { managementRequest } from '@/features/management/management-api'
 import { useManagementAuth } from '@/features/management/management-auth'
+import { queryKeys, useApiKeysQuery } from '@/shared/api/dashboard-queries'
 
 import type { ApiKeysResponse } from './api-keys-page.type'
 

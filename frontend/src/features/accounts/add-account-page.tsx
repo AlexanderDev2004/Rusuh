@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
-import { toastError, toastInfo, toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/page-shell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,6 +28,7 @@ import {
   useSubmitOAuthCallbackMutation,
 } from '@/features/management/oauth'
 import { useStartZedLoginMutation, useZedLoginStatusQuery } from '@/features/management/zed'
+import { toastError, toastInfo, toastSuccess } from '@/shared/toast'
 
 import { formatOauthExpiryHint, resolveTrackedOauthSession } from './add-account-page.oauth'
 import type {

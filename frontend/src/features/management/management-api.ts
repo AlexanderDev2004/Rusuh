@@ -2,19 +2,23 @@ import { useQuery } from '@tanstack/react-query'
 
 import { useManagementAuth } from './management-auth'
 import { ManagementAuthError } from './management-error'
+
 export type ManagementStatus = {
   status: string
   port: number
   providers: number
 }
+
 export type ManagementConfig = {
   port: number
   host: string
   debug: boolean
 }
+
 type QueryOptions = {
   enabled?: boolean
 }
+
 async function request<T>(path: string, secret: string): Promise<T> {
   const response = await fetch(path, {
     headers: {
@@ -58,6 +62,7 @@ export async function managementRequest<T>(
 
   return (await response.json()) as T
 }
+
 export function useManagementStatusQuery(options?: QueryOptions) {
   const { secret } = useManagementAuth()
 
@@ -69,6 +74,7 @@ export function useManagementStatusQuery(options?: QueryOptions) {
     throwOnError: false,
   })
 }
+
 export function useManagementConfigQuery(options?: QueryOptions) {
   const { secret } = useManagementAuth()
 
