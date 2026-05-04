@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { queryKeys } from '@/api/dashboard-queries'
+
 import { managementRequest } from './management-api'
 import { useManagementAuth } from './management-auth'
-import { queryKeys } from './query'
 
 type AuthFileStatusPayload = {
   status: string

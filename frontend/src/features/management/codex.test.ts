@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 
-import { checkCodexQuota } from './management-codex'
+import { checkCodexQuota } from './codex'
 
 const originalFetch = globalThis.fetch
 

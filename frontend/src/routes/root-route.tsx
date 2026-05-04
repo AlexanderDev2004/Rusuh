@@ -1,7 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 
-import { ManagementAuthGate } from '../lib/management-auth'
-import { DashboardLayout } from './dashboard-layout'
+import { DashboardLayout } from '@/components/layout/dashboard-layout'
+import { ManagementAuthGate } from '@/features/management/management-auth'
 
 export function RootRouteComponent() {
   return (

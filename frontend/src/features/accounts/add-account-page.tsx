@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
+import { toastError, toastInfo, toastSuccess } from '@/components/feedback/toast'
+import { PageShell } from '@/components/layout/page-shell'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -14,22 +16,20 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-
-import { useUploadAuthFileMutation } from '../../lib/management-auth-files'
+import { buildOAuthTerminalFeedback } from '@/features/accounts/oauth-feedback'
+import { useUploadAuthFileMutation } from '@/features/management/auth-files'
 import {
   useImportKiroMutation,
   useImportKiroSocialMutation,
   useStartKiroBuilderIdMutation,
-} from '../../lib/management-kiro'
+} from '@/features/management/kiro'
 import {
   useOAuthStatusQuery,
   useStartOAuthMutation,
   useSubmitOAuthCallbackMutation,
-} from '../../lib/management-oauth'
-import { useStartZedLoginMutation, useZedLoginStatusQuery } from '../../lib/management-zed'
-import { buildOAuthTerminalFeedback } from '../../lib/oauth-feedback'
-import { toastError, toastInfo, toastSuccess } from '../../lib/toast'
-import { PageShell } from '../page-shell'
+} from '@/features/management/oauth'
+import { useStartZedLoginMutation, useZedLoginStatusQuery } from '@/features/management/zed'
+
 import { formatOauthExpiryHint, resolveTrackedOauthSession } from './add-account-page.oauth'
 import type {
   AddAccountOauthProvider,

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { api } from './api'
+import { api } from './dashboard-api'
 
 export const queryKeys = {
   overview: ['dashboard', 'overview'] as const,

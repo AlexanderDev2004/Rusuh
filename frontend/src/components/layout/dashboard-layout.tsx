@@ -2,14 +2,13 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { LaptopMinimal, Moon, Sun } from 'lucide-react'
 import { type PropsWithChildren, useEffect, useRef, useState } from 'react'
 
+import { useOverviewQuery } from '@/api/dashboard-queries'
+import { useThemeStore } from '@/app/theme'
+import { cn } from '@/components/shared/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-
-import { useManagementStatusQuery } from '../lib/management-api'
-import { useManagementAuth } from '../lib/management-auth'
-import { useOverviewQuery } from '../lib/query'
-import { useThemeStore } from '../lib/theme'
-import { cn } from '../lib/utils'
+import { useManagementStatusQuery } from '@/features/management/management-api'
+import { useManagementAuth } from '@/features/management/management-auth'
 
 const navItems = [
   { to: '/', label: 'Overview' },

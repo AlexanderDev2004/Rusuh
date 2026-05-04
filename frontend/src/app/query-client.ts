@@ -1,6 +1,6 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 
-import { ManagementAuthError } from './management-error'
+import { ManagementAuthError } from '@/features/management/management-error'
 
 export function createAppQueryClient(onManagementAuthError: () => void) {
   return new QueryClient({

@@ -1,4 +1,4 @@
-import type { ManagementAuthFile } from '../../lib/management-auth-files'
+import type { ManagementAuthFile } from '@/features/management/auth-files'
 
 export type ProviderGroup = {
   key: string

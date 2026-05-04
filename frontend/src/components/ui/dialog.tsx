@@ -1,7 +1,7 @@
 import * as RadixUi from '@radix-ui/react-dialog'
 import * as React from 'react'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/components/shared/utils'
 
 const DialogPrimitive = RadixUi
 

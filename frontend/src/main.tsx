@@ -4,10 +4,10 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import './index.css'
+import { createAppQueryClient } from './app/query-client'
+import { useThemeStore } from './app/theme'
 import { Toaster } from './components/ui/sonner'
-import { ManagementAuthProvider, useManagementAuth } from './lib/management-auth'
-import { createAppQueryClient } from './lib/query-client'
-import { useThemeStore } from './lib/theme'
+import { ManagementAuthProvider, useManagementAuth } from './features/management/management-auth'
 import { router } from './routes'
 function AppProviders() {
   const { clearSecret } = useManagementAuth()

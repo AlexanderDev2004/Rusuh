@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { queryKeys } from '@/api/dashboard-queries'
+
 import { managementRequest } from './management-api'
 import { useManagementAuth } from './management-auth'
-import { queryKeys } from './query'
 
 type StartKiroBuilderIdPayload = {
   session_id: string

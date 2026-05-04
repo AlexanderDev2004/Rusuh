@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+set -e
+
+if [ -d frontend ]; then
+  cd frontend
+else
+  cd "$(dirname "$0")/.."
+fi
+
+bun run format:check
+bun run lint
+bun run typecheck

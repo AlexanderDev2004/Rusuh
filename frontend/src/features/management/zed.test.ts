@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test'
 
-import { checkZedQuota, fetchZedLoginStatus, fetchZedModels, startZedLogin } from './management-zed'
+import { checkZedQuota, fetchZedLoginStatus, fetchZedModels, startZedLogin } from './zed'
 
 const originalFetch = globalThis.fetch
 

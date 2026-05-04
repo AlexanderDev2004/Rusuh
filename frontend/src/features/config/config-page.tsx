@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 
+import { useConfigQuery } from '@/api/dashboard-queries'
+import { PageShell } from '@/components/layout/page-shell'
+import { QueryState } from '@/components/shared/query-state'
+import { statusTone } from '@/components/shared/status-tone'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-import { useConfigQuery } from '../../lib/query'
-import { PageShell } from '../page-shell'
-import { QueryState } from '../query-state'
-import { statusTone } from '../status-tone'
 import type { BoolPillProps, ConfigFormatMode } from './config-page.type'
 
 function BoolPill({ value }: BoolPillProps) {

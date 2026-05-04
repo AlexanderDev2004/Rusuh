@@ -12,7 +12,8 @@
     "format:check": "oxfmt --config .oxfmt.json --check .",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "check": "bun run typecheck && bun run lint && bun run format:check"
+    "check": "bun run typecheck && bun run lint && bun run format:check",
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.0",
     "globals": "^17.4.0",
+    "husky": "^9.1.7",
     "oxfmt": "^0.40.0",
     "oxlint": "^1.55.0",
     "tailwindcss": "^4.2.1",
