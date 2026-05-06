@@ -1,19 +1,5 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
 
-import { useUploadAuthFileMutation } from '@/apis/auth/files/api'
-import {
-  useImportKiroMutation,
-  useImportKiroSocialMutation,
-  useStartKiroBuilderIdMutation,
-} from '@/apis/auth/kiro/api'
-import {
-  useOAuthStatusQuery,
-  useStartOAuthMutation,
-  useSubmitOAuthCallbackMutation,
-} from '@/apis/auth/oauth/api'
-import { useStartZedLoginMutation, useZedLoginStatusQuery } from '@/apis/auth/zed/api'
-import { toastError, toastInfo, toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/PageShell'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -28,234 +14,14 @@ import {
 } from '@/components/ui/Select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { Textarea } from '@/components/ui/Textarea'
-import { buildOAuthTerminalFeedback } from '@/features/accounts/lib/feedback'
 
-import { formatOauthExpiryHint, resolveTrackedOauthSession } from './lib/oauth'
-import type { AddAccountOauthProvider, KiroImportMode, TrackedOauthStates } from './types'
-
-const MAX_LABEL_LENGTH = 200
-const MAX_UPLOAD_NAME_LENGTH = 200
-const MAX_UPLOAD_BODY_LENGTH = 20000
-const MAX_UPLOAD_FILE_SIZE = 1024 * 1024
-
-function useProviderOauthStatus(state: string | undefined) {
-  return useOAuthStatusQuery(state ?? null, Boolean(state))
-}
+import { useAddAccountModel } from './hooks/useAddAccountModel'
+import type { AddAccountOauthProvider } from './types'
 
 export function AddAccountPage() {
   const navigate = useNavigate()
-  const uploadAuthFile = useUploadAuthFileMutation()
-  const startOAuth = useStartOAuthMutation()
-  const submitOAuthCallback = useSubmitOAuthCallbackMutation()
-  const startKiroBuilderId = useStartKiroBuilderIdMutation()
-  const startZedLogin = useStartZedLoginMutation()
-  const importKiro = useImportKiroMutation()
-  const importKiroSocial = useImportKiroSocialMutation()
-
-  const [oauthStates, setOauthStates] = useState<TrackedOauthStates>({})
-  const [provider, setProvider] = useState<AddAccountOauthProvider>('kiro')
-
-  const [antigravityLabel, setAntigravityLabel] = useState('')
-  const [antigravityAuthUrl, setAntigravityAuthUrl] = useState('')
-  const [antigravityCallbackUrl, setAntigravityCallbackUrl] = useState('')
-
-  const [codexLabel, setCodexLabel] = useState('')
-  const [codexAuthUrl, setCodexAuthUrl] = useState('')
-  const [codexCallbackUrl, setCodexCallbackUrl] = useState('')
-
-  const [zedLabel, setZedLabel] = useState('')
-  const [zedLoginUrl, setZedLoginUrl] = useState('')
-  const [zedPort, setZedPort] = useState<number | null>(null)
-  const [zedSessionId, setZedSessionId] = useState<string | null>(null)
-
-  const [copilotLabel, setCopilotLabel] = useState('')
-  const [copilotUserCode, setCopilotUserCode] = useState('')
-  const [copilotVerificationUri, setCopilotVerificationUri] = useState('')
-  const [copilotExpiresIn, setCopilotExpiresIn] = useState<number | undefined>()
-
-  const [kiroLabel, setKiroLabel] = useState('')
-  const [kiroImportMode, setKiroImportMode] = useState<KiroImportMode>('structured')
-  const [kiroImportJson, setKiroImportJson] = useState('')
-  const [kiroAccessToken, setKiroAccessToken] = useState('')
-  const [kiroRefreshToken, setKiroRefreshToken] = useState('')
-  const [kiroExpiresAt, setKiroExpiresAt] = useState('')
-  const [kiroClientId, setKiroClientId] = useState('')
-  const [kiroClientSecret, setKiroClientSecret] = useState('')
-  const [kiroProfileArn, setKiroProfileArn] = useState('')
-  const [kiroProvider, setKiroProvider] = useState('AWS')
-  const [kiroRegion, setKiroRegion] = useState('us-east-1')
-  const [kiroStartUrl, setKiroStartUrl] = useState('https://view.awsapps.com/start')
-  const [kiroEmail, setKiroEmail] = useState('')
-  const [kiroSocialRefreshToken, setKiroSocialRefreshToken] = useState('')
-
-  const [uploadName, setUploadName] = useState('')
-  const [uploadBody, setUploadBody] = useState('')
-  const [uploadFileError, setUploadFileError] = useState<string | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-
-  const kiroOauthState = oauthStates.kiro
-  const antigravityOauthState = oauthStates.antigravity
-  const codexOauthState = oauthStates.codex
-  const copilotOauthState = oauthStates['github-copilot']
-
-  const kiroOauthStatus = useProviderOauthStatus(kiroOauthState)
-  const antigravityOauthStatus = useProviderOauthStatus(antigravityOauthState)
-  const codexOauthStatus = useProviderOauthStatus(codexOauthState)
-  const zedLoginStatus = useZedLoginStatusQuery(zedSessionId, Boolean(zedSessionId))
-  const copilotOauthStatus = useProviderOauthStatus(copilotOauthState)
-
-  const oauthStatusByProvider = {
-    kiro: kiroOauthStatus,
-    antigravity: antigravityOauthStatus,
-    codex: codexOauthStatus,
-    'github-copilot': copilotOauthStatus,
-  } as const
-
-  const activeOauthState = provider === 'zed' ? zedSessionId : oauthStates[provider]
-  const activeOauthStatus = provider === 'zed' ? null : oauthStatusByProvider[provider]
-  const activeOauthStatusData = activeOauthStatus?.data
-  const activeOauthStatusSummary =
-    provider === 'zed'
-      ? (zedLoginStatus.data?.status ?? (zedLoginStatus.isFetching ? 'waiting' : 'idle'))
-      : activeOauthState
-        ? (activeOauthStatusData?.status ?? (activeOauthStatus?.isFetching ? 'wait' : 'idle'))
-        : 'idle'
-  const copilotExpiryHint = formatOauthExpiryHint(copilotExpiresIn)
-  const lastNotifiedOauthStates = useRef<Partial<Record<AddAccountOauthProvider, string>>>({})
-  const lastNotifiedZedSessionId = useRef<string | null>(null)
-
-  useEffect(() => {
-    const providerStatuses = {
-      kiro: {
-        status: kiroOauthStatus.data?.status,
-        error: kiroOauthStatus.data?.error,
-      },
-      antigravity: {
-        status: antigravityOauthStatus.data?.status,
-        error: antigravityOauthStatus.data?.error,
-      },
-      codex: {
-        status: codexOauthStatus.data?.status,
-        error: codexOauthStatus.data?.error,
-      },
-      'github-copilot': {
-        status: copilotOauthStatus.data?.status,
-        error: copilotOauthStatus.data?.error,
-      },
-    } as const
-
-    const trackedProviders: Array<Exclude<AddAccountOauthProvider, 'zed'>> = [
-      'kiro',
-      'antigravity',
-      'codex',
-      'github-copilot',
-    ]
-
-    for (const trackedProvider of trackedProviders) {
-      const trackedState = oauthStates[trackedProvider]
-      const trackedStatus = providerStatuses[trackedProvider].status
-      const trackedError = providerStatuses[trackedProvider].error
-
-      if (!trackedState || !trackedStatus || trackedStatus === 'wait') {
-        continue
-      }
-
-      if (lastNotifiedOauthStates.current[trackedProvider] === trackedState) {
-        continue
-      }
-
-      const feedback = buildOAuthTerminalFeedback(trackedStatus, trackedError)
-      if (!feedback) {
-        continue
-      }
-
-      if (feedback.type === 'success') {
-        toastSuccess(feedback.title, feedback.detail)
-      } else {
-        toastError(feedback.title, feedback.detail)
-      }
-
-      lastNotifiedOauthStates.current[trackedProvider] = trackedState
-    }
-  }, [
-    oauthStates,
-    kiroOauthStatus.data?.status,
-    kiroOauthStatus.data?.error,
-    antigravityOauthStatus.data?.status,
-    antigravityOauthStatus.data?.error,
-    codexOauthStatus.data?.status,
-    codexOauthStatus.data?.error,
-    copilotOauthStatus.data?.status,
-    copilotOauthStatus.data?.error,
-  ])
-
-  useEffect(() => {
-    if (!zedSessionId || !zedLoginStatus.data?.status || zedLoginStatus.data.status === 'waiting') {
-      return
-    }
-
-    if (lastNotifiedZedSessionId.current === zedSessionId) {
-      return
-    }
-
-    toastSuccess('Zed login complete', 'Account connected. Open Accounts to review it.')
-    lastNotifiedZedSessionId.current = zedSessionId
-  }, [zedSessionId, zedLoginStatus.data?.status])
-
-  function submitKiroStructuredImport() {
-    importKiro.mutate(
-      {
-        access_token: kiroAccessToken.trim(),
-        refresh_token: kiroRefreshToken.trim(),
-        expires_at: kiroExpiresAt.trim(),
-        client_id: kiroClientId.trim(),
-        client_secret: kiroClientSecret.trim(),
-        profile_arn: kiroProfileArn.trim(),
-        auth_method: 'import',
-        provider: kiroProvider.trim() || 'AWS',
-        region: kiroRegion.trim() || 'us-east-1',
-        start_url: kiroStartUrl.trim(),
-        email: kiroEmail.trim(),
-        label: kiroLabel.trim(),
-      },
-      {
-        onSuccess: () => {
-          toastSuccess('Kiro account added', 'Open Accounts to review it.')
-        },
-        onError: (error) => {
-          toastError('Could not add the Kiro account', error.message)
-        },
-      },
-    )
-  }
-
-  function submitKiroJsonImport() {
-    const parsed = JSON.parse(kiroImportJson) as Record<string, unknown>
-    importKiro.mutate(
-      {
-        access_token: String(parsed.access_token ?? ''),
-        refresh_token: String(parsed.refresh_token ?? ''),
-        expires_at: String(parsed.expires_at ?? ''),
-        client_id: String(parsed.client_id ?? ''),
-        client_secret: String(parsed.client_secret ?? ''),
-        profile_arn: String(parsed.profile_arn ?? ''),
-        auth_method: typeof parsed.auth_method === 'string' ? parsed.auth_method : 'import',
-        provider: typeof parsed.provider === 'string' ? parsed.provider : 'AWS',
-        region: typeof parsed.region === 'string' ? parsed.region : 'us-east-1',
-        start_url: typeof parsed.start_url === 'string' ? parsed.start_url : '',
-        email: typeof parsed.email === 'string' ? parsed.email : '',
-        label: kiroLabel.trim(),
-      },
-      {
-        onSuccess: () => {
-          toastSuccess('Kiro account added', 'Open Accounts to review it.')
-        },
-        onError: (error) => {
-          toastError('Could not add the Kiro account', error.message)
-        },
-      },
-    )
-  }
+  const model = useAddAccountModel()
+  const { limits, provider, setProvider } = model
 
   return (
     <PageShell
@@ -350,47 +116,31 @@ export function AddAccountPage() {
                   </div>
                   <Button
                     type='button'
-                    onClick={() =>
-                      startKiroBuilderId.mutate(
-                        { label: kiroLabel.trim() || undefined },
-                        {
-                          onSuccess: (data) => {
-                            setOauthStates((prev) => ({ ...prev, kiro: data.session_id }))
-                            toastSuccess(
-                              'Kiro sign-in started',
-                              'Finish the flow, then open Accounts.',
-                            )
-                            window.open(data.auth_url, '_blank', 'noopener,noreferrer')
-                          },
-                          onError: (error) => {
-                            toastError('Could not start Kiro sign-in', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={startKiroBuilderId.isPending}
+                    onClick={model.kiro.startBuilderFlow}
+                    disabled={model.kiro.isStartingBuilderId}
                     className='rounded-full px-5'
                   >
-                    {startKiroBuilderId.isPending ? 'Launching…' : 'Start Builder ID'}
+                    {model.kiro.isStartingBuilderId ? 'Launching…' : 'Start Builder ID'}
                   </Button>
                 </div>
 
                 <div className='dashboard-panel text-muted-foreground rounded-2xl p-4 text-sm leading-6'>
-                  {activeOauthState ? (
+                  {model.activeOauthState ? (
                     <>
                       <p>
                         Session ID{' '}
-                        <span className='text-foreground break-all'>{activeOauthState}</span>
+                        <span className='text-foreground break-all'>{model.activeOauthState}</span>
                       </p>
                       <p>
-                        Status <span className='text-foreground'>{activeOauthStatusSummary}</span>
+                        Status{' '}
+                        <span className='text-foreground'>{model.activeOauthStatusSummary}</span>
                       </p>
                     </>
                   ) : (
                     <p>No sign-in session started yet.</p>
                   )}
-                  {activeOauthStatusData?.error ? (
-                    <p className='text-destructive mt-2'>{activeOauthStatusData.error}</p>
+                  {model.activeOauthStatusData?.error ? (
+                    <p className='text-destructive mt-2'>{model.activeOauthStatusData.error}</p>
                   ) : null}
                 </div>
               </section>
@@ -404,8 +154,10 @@ export function AddAccountPage() {
                     </p>
                   </div>
                   <Select
-                    value={kiroImportMode}
-                    onValueChange={(value) => setKiroImportMode(value as 'structured' | 'json')}
+                    value={model.kiro.importMode}
+                    onValueChange={(value) =>
+                      model.kiro.setImportMode(value as 'structured' | 'json')
+                    }
                   >
                     <SelectTrigger className='h-11 w-[180px] rounded-full'>
                       <SelectValue />
@@ -421,10 +173,10 @@ export function AddAccountPage() {
                   <span className='text-sm font-medium'>Account name</span>
                   <Input
                     type='text'
-                    value={kiroLabel}
-                    onChange={(event) => setKiroLabel(event.target.value)}
+                    value={model.kiro.label}
+                    onChange={(event) => model.kiro.setLabel(event.target.value)}
                     placeholder='e.g. Kiro work account'
-                    maxLength={MAX_LABEL_LENGTH}
+                    maxLength={limits.maxLabelLength}
                     className='h-11 rounded-2xl'
                   />
                   <span className='text-muted-foreground text-xs'>
@@ -432,73 +184,73 @@ export function AddAccountPage() {
                   </span>
                 </label>
 
-                {kiroImportMode === 'structured' ? (
+                {model.kiro.importMode === 'structured' ? (
                   <div className='grid gap-3 lg:grid-cols-2'>
                     <Input
-                      value={kiroAccessToken}
-                      onChange={(event) => setKiroAccessToken(event.target.value)}
+                      value={model.kiro.accessToken}
+                      onChange={(event) => model.kiro.setAccessToken(event.target.value)}
                       placeholder='access_token'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroRefreshToken}
-                      onChange={(event) => setKiroRefreshToken(event.target.value)}
+                      value={model.kiro.refreshToken}
+                      onChange={(event) => model.kiro.setRefreshToken(event.target.value)}
                       placeholder='refresh_token'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroExpiresAt}
-                      onChange={(event) => setKiroExpiresAt(event.target.value)}
+                      value={model.kiro.expiresAt}
+                      onChange={(event) => model.kiro.setExpiresAt(event.target.value)}
                       placeholder='expires_at (RFC3339)'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroClientId}
-                      onChange={(event) => setKiroClientId(event.target.value)}
+                      value={model.kiro.clientId}
+                      onChange={(event) => model.kiro.setClientId(event.target.value)}
                       placeholder='client_id'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroClientSecret}
-                      onChange={(event) => setKiroClientSecret(event.target.value)}
+                      value={model.kiro.clientSecret}
+                      onChange={(event) => model.kiro.setClientSecret(event.target.value)}
                       placeholder='client_secret'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroProfileArn}
-                      onChange={(event) => setKiroProfileArn(event.target.value)}
+                      value={model.kiro.profileArn}
+                      onChange={(event) => model.kiro.setProfileArn(event.target.value)}
                       placeholder='profile_arn (optional)'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroProvider}
-                      onChange={(event) => setKiroProvider(event.target.value)}
+                      value={model.kiro.provider}
+                      onChange={(event) => model.kiro.setProvider(event.target.value)}
                       placeholder='provider'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroRegion}
-                      onChange={(event) => setKiroRegion(event.target.value)}
+                      value={model.kiro.region}
+                      onChange={(event) => model.kiro.setRegion(event.target.value)}
                       placeholder='region'
                       className='h-11 rounded-2xl'
                     />
                     <Input
-                      value={kiroStartUrl}
-                      onChange={(event) => setKiroStartUrl(event.target.value)}
+                      value={model.kiro.startUrl}
+                      onChange={(event) => model.kiro.setStartUrl(event.target.value)}
                       placeholder='start_url'
                       className='h-11 rounded-2xl lg:col-span-2'
                     />
                     <Input
-                      value={kiroEmail}
-                      onChange={(event) => setKiroEmail(event.target.value)}
+                      value={model.kiro.email}
+                      onChange={(event) => model.kiro.setEmail(event.target.value)}
                       placeholder='email (optional)'
                       className='h-11 rounded-2xl lg:col-span-2'
                     />
                   </div>
                 ) : (
                   <Textarea
-                    value={kiroImportJson}
-                    onChange={(event) => setKiroImportJson(event.target.value)}
+                    value={model.kiro.importJson}
+                    onChange={(event) => model.kiro.setImportJson(event.target.value)}
                     placeholder='{"access_token":"...","refresh_token":"..."}'
                     className='min-h-40 rounded-2xl px-4 py-3'
                   />
@@ -507,24 +259,11 @@ export function AddAccountPage() {
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() => {
-                      try {
-                        if (kiroImportMode === 'json') {
-                          submitKiroJsonImport()
-                          return
-                        }
-                        submitKiroStructuredImport()
-                      } catch (error) {
-                        toastError(
-                          'Could not read the JSON',
-                          error instanceof Error ? error.message : 'Check the JSON and try again.',
-                        )
-                      }
-                    }}
-                    disabled={importKiro.isPending}
+                    onClick={model.kiro.submitImport}
+                    disabled={model.kiro.isImporting}
                     className='h-11 rounded-full px-5'
                   >
-                    {importKiro.isPending ? 'Importing…' : 'Import Kiro auth'}
+                    {model.kiro.isImporting ? 'Importing…' : 'Import Kiro auth'}
                   </Button>
                 </div>
               </section>
@@ -537,34 +276,19 @@ export function AddAccountPage() {
                   </p>
                 </div>
                 <Textarea
-                  value={kiroSocialRefreshToken}
-                  onChange={(event) => setKiroSocialRefreshToken(event.target.value)}
+                  value={model.kiro.socialRefreshToken}
+                  onChange={(event) => model.kiro.setSocialRefreshToken(event.target.value)}
                   placeholder='aorAAAAAG...'
                   className='min-h-24 rounded-2xl px-4 py-3'
                 />
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() =>
-                      importKiroSocial.mutate(
-                        {
-                          refresh_token: kiroSocialRefreshToken.trim(),
-                          label: kiroLabel.trim() || undefined,
-                        },
-                        {
-                          onSuccess: () => {
-                            toastSuccess('Kiro account added', 'Open Accounts to review it.')
-                          },
-                          onError: (error) => {
-                            toastError('Could not add the Kiro account', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={importKiroSocial.isPending}
+                    onClick={model.kiro.submitSocialImport}
+                    disabled={model.kiro.isImportingSocial}
                     className='h-11 rounded-full px-5'
                   >
-                    {importKiroSocial.isPending ? 'Importing…' : 'Import social token'}
+                    {model.kiro.isImportingSocial ? 'Importing…' : 'Import social token'}
                   </Button>
                 </div>
               </section>
@@ -583,11 +307,11 @@ export function AddAccountPage() {
                   <span className='text-sm font-medium'>Account name</span>
                   <Input
                     type='text'
-                    value={antigravityLabel}
-                    onChange={(event) => setAntigravityLabel(event.target.value)}
+                    value={model.antigravity.label}
+                    onChange={(event) => model.antigravity.setLabel(event.target.value)}
                     className='h-11 rounded-2xl'
                     placeholder='e.g. Antigravity work account'
-                    maxLength={MAX_LABEL_LENGTH}
+                    maxLength={limits.maxLabelLength}
                   />
                   <span className='text-muted-foreground text-xs'>
                     Only used to identify this account in the dashboard. You can leave it empty.
@@ -596,47 +320,28 @@ export function AddAccountPage() {
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() =>
-                      startOAuth.mutate(
-                        {
-                          provider: 'antigravity',
-                          label: antigravityLabel.trim() || undefined,
-                        },
-                        {
-                          onSuccess: (data) => {
-                            setOauthStates((prev) => ({
-                              ...prev,
-                              [data.provider as AddAccountOauthProvider]: data.state,
-                            }))
-                            setAntigravityAuthUrl(data.url ?? '')
-                            toastSuccess(
-                              'Antigravity OAuth link ready',
-                              'Open the link, login, then paste localhost callback URL below.',
-                            )
-                          },
-                          onError: (error) => {
-                            toastError('Could not start Antigravity sign-in', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={startOAuth.isPending}
+                    onClick={model.antigravity.startOauth}
+                    disabled={model.antigravity.isStartingOauth}
                     className='h-11 rounded-full px-5'
                   >
-                    {startOAuth.isPending ? 'Generating link…' : 'Start OAuth'}
+                    {model.antigravity.isStartingOauth ? 'Generating link…' : 'Start OAuth'}
                   </Button>
                 </div>
 
-                {antigravityAuthUrl ? (
+                {model.antigravity.authUrl ? (
                   <div className='dashboard-panel space-y-3 rounded-2xl p-4'>
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
-                    <Input value={antigravityAuthUrl} readOnly className='h-11 rounded-2xl' />
+                    <Input
+                      value={model.antigravity.authUrl}
+                      readOnly
+                      className='h-11 rounded-2xl'
+                    />
                     <div className='flex justify-end'>
                       <Button
                         type='button'
                         variant='outline'
                         onClick={() =>
-                          window.open(antigravityAuthUrl, '_blank', 'noopener,noreferrer')
+                          window.open(model.antigravity.authUrl, '_blank', 'noopener,noreferrer')
                         }
                         className='rounded-full px-5'
                       >
@@ -651,48 +356,24 @@ export function AddAccountPage() {
                     Paste localhost callback URL after login:
                   </p>
                   <Textarea
-                    value={antigravityCallbackUrl}
-                    onChange={(event) => setAntigravityCallbackUrl(event.target.value)}
+                    value={model.antigravity.callbackUrl}
+                    onChange={(event) => model.antigravity.setCallbackUrl(event.target.value)}
                     placeholder='http://localhost:3456/antigravity/callback?code=...&state=...'
                     className='min-h-24 rounded-2xl px-4 py-3'
                   />
                   <div className='flex justify-end'>
                     <Button
                       type='button'
-                      onClick={() => {
-                        const trackedSession = resolveTrackedOauthSession(
-                          'antigravity',
-                          antigravityCallbackUrl,
-                          oauthStates,
-                        )
-
-                        submitOAuthCallback.mutate(
-                          {
-                            provider: 'antigravity',
-                            redirectUrl: antigravityCallbackUrl,
-                          },
-                          {
-                            onSuccess: () => {
-                              if (trackedSession) {
-                                setOauthStates((prev) => ({
-                                  ...prev,
-                                  [trackedSession.provider]: trackedSession.state,
-                                }))
-                              }
-                              toastSuccess('Callback submitted', 'Polling OAuth status...')
-                            },
-                            onError: (error) => {
-                              toastError('Could not submit callback URL', error.message)
-                            },
-                          },
-                        )
-                      }}
+                      onClick={model.antigravity.submitCallback}
                       disabled={
-                        submitOAuthCallback.isPending || antigravityCallbackUrl.trim().length === 0
+                        model.antigravity.isSubmittingCallback ||
+                        model.antigravity.callbackUrl.trim().length === 0
                       }
                       className='h-11 rounded-full px-5'
                     >
-                      {submitOAuthCallback.isPending ? 'Submitting…' : 'Submit callback URL'}
+                      {model.antigravity.isSubmittingCallback
+                        ? 'Submitting…'
+                        : 'Submit callback URL'}
                     </Button>
                   </div>
                 </div>
@@ -712,11 +393,11 @@ export function AddAccountPage() {
                   <span className='text-sm font-medium'>Account name</span>
                   <Input
                     type='text'
-                    value={codexLabel}
-                    onChange={(event) => setCodexLabel(event.target.value)}
+                    value={model.codex.label}
+                    onChange={(event) => model.codex.setLabel(event.target.value)}
                     className='h-11 rounded-2xl'
                     placeholder='e.g. Codex team account'
-                    maxLength={MAX_LABEL_LENGTH}
+                    maxLength={limits.maxLabelLength}
                   />
                   <span className='text-muted-foreground text-xs'>
                     Only used to identify this account in the dashboard. You can leave it empty.
@@ -725,46 +406,25 @@ export function AddAccountPage() {
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() =>
-                      startOAuth.mutate(
-                        {
-                          provider: 'codex',
-                          label: codexLabel.trim() || undefined,
-                        },
-                        {
-                          onSuccess: (data) => {
-                            setOauthStates((prev) => ({
-                              ...prev,
-                              [data.provider as AddAccountOauthProvider]: data.state,
-                            }))
-                            setCodexAuthUrl(data.url ?? '')
-                            toastSuccess(
-                              'Codex OAuth link ready',
-                              'Open the link, login, then paste localhost callback URL below.',
-                            )
-                          },
-                          onError: (error) => {
-                            toastError('Could not start Codex sign-in', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={startOAuth.isPending}
+                    onClick={model.codex.startOauth}
+                    disabled={model.codex.isStartingOauth}
                     className='h-11 rounded-full px-5'
                   >
-                    {startOAuth.isPending ? 'Generating link…' : 'Start OAuth'}
+                    {model.codex.isStartingOauth ? 'Generating link…' : 'Start OAuth'}
                   </Button>
                 </div>
 
-                {codexAuthUrl ? (
+                {model.codex.authUrl ? (
                   <div className='dashboard-panel space-y-3 rounded-2xl p-4'>
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
-                    <Input value={codexAuthUrl} readOnly className='h-11 rounded-2xl' />
+                    <Input value={model.codex.authUrl} readOnly className='h-11 rounded-2xl' />
                     <div className='flex justify-end'>
                       <Button
                         type='button'
                         variant='outline'
-                        onClick={() => window.open(codexAuthUrl, '_blank', 'noopener,noreferrer')}
+                        onClick={() =>
+                          window.open(model.codex.authUrl, '_blank', 'noopener,noreferrer')
+                        }
                         className='rounded-full px-5'
                       >
                         Open login link
@@ -778,48 +438,22 @@ export function AddAccountPage() {
                     Paste localhost callback URL after login:
                   </p>
                   <Textarea
-                    value={codexCallbackUrl}
-                    onChange={(event) => setCodexCallbackUrl(event.target.value)}
+                    value={model.codex.callbackUrl}
+                    onChange={(event) => model.codex.setCallbackUrl(event.target.value)}
                     placeholder='http://localhost:3456/codex/callback?code=...&state=...'
                     className='min-h-24 rounded-2xl px-4 py-3'
                   />
                   <div className='flex justify-end'>
                     <Button
                       type='button'
-                      onClick={() => {
-                        const trackedSession = resolveTrackedOauthSession(
-                          'codex',
-                          codexCallbackUrl,
-                          oauthStates,
-                        )
-
-                        submitOAuthCallback.mutate(
-                          {
-                            provider: 'codex',
-                            redirectUrl: codexCallbackUrl,
-                          },
-                          {
-                            onSuccess: () => {
-                              if (trackedSession) {
-                                setOauthStates((prev) => ({
-                                  ...prev,
-                                  [trackedSession.provider]: trackedSession.state,
-                                }))
-                              }
-                              toastSuccess('Callback submitted', 'Polling OAuth status...')
-                            },
-                            onError: (error) => {
-                              toastError('Could not submit callback URL', error.message)
-                            },
-                          },
-                        )
-                      }}
+                      onClick={model.codex.submitCallback}
                       disabled={
-                        submitOAuthCallback.isPending || codexCallbackUrl.trim().length === 0
+                        model.codex.isSubmittingCallback ||
+                        model.codex.callbackUrl.trim().length === 0
                       }
                       className='h-11 rounded-full px-5'
                     >
-                      {submitOAuthCallback.isPending ? 'Submitting…' : 'Submit callback URL'}
+                      {model.codex.isSubmittingCallback ? 'Submitting…' : 'Submit callback URL'}
                     </Button>
                   </div>
                 </div>
@@ -840,11 +474,11 @@ export function AddAccountPage() {
                   <span className='text-sm font-medium'>Account name</span>
                   <Input
                     type='text'
-                    value={zedLabel}
-                    onChange={(event) => setZedLabel(event.target.value)}
+                    value={model.zed.label}
+                    onChange={(event) => model.zed.setLabel(event.target.value)}
                     className='h-11 rounded-2xl'
                     placeholder='e.g. Zed laptop account'
-                    maxLength={MAX_LABEL_LENGTH}
+                    maxLength={limits.maxLabelLength}
                   />
                   <span className='text-muted-foreground text-xs'>
                     Only used to identify this account in the dashboard. You can leave it empty.
@@ -853,47 +487,30 @@ export function AddAccountPage() {
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() =>
-                      startZedLogin.mutate(
-                        { name: zedLabel.trim() || undefined },
-                        {
-                          onSuccess: (data) => {
-                            setZedSessionId(data.session_id)
-                            setZedLoginUrl(data.login_url)
-                            setZedPort(data.port)
-                            toastSuccess(
-                              'Zed login started',
-                              'Open the login link and finish the native-app flow.',
-                            )
-                            window.open(data.login_url, '_blank', 'noopener,noreferrer')
-                          },
-                          onError: (error) => {
-                            toastError('Could not start Zed sign-in', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={startZedLogin.isPending}
+                    onClick={model.zed.startLogin}
+                    disabled={model.zed.isStartingLogin}
                     className='h-11 rounded-full px-5'
                   >
-                    {startZedLogin.isPending ? 'Launching…' : 'Start Zed login'}
+                    {model.zed.isStartingLogin ? 'Launching…' : 'Start Zed login'}
                   </Button>
                 </div>
 
-                {zedLoginUrl ? (
+                {model.zed.loginUrl ? (
                   <div className='dashboard-panel space-y-3 rounded-2xl p-4'>
                     <p className='text-muted-foreground text-sm'>Open this login link manually:</p>
-                    <Input value={zedLoginUrl} readOnly className='h-11 rounded-2xl' />
-                    {zedPort ? (
+                    <Input value={model.zed.loginUrl} readOnly className='h-11 rounded-2xl' />
+                    {model.zed.port ? (
                       <p className='text-muted-foreground text-sm'>
-                        Native app callback port: {zedPort}
+                        Native app callback port: {model.zed.port}
                       </p>
                     ) : null}
                     <div className='flex justify-end'>
                       <Button
                         type='button'
                         variant='outline'
-                        onClick={() => window.open(zedLoginUrl, '_blank', 'noopener,noreferrer')}
+                        onClick={() =>
+                          window.open(model.zed.loginUrl, '_blank', 'noopener,noreferrer')
+                        }
                         className='rounded-full px-5'
                       >
                         Open login link
@@ -903,28 +520,29 @@ export function AddAccountPage() {
                 ) : null}
 
                 <div className='dashboard-panel text-muted-foreground rounded-2xl p-4 text-sm leading-6'>
-                  {activeOauthState ? (
+                  {model.activeOauthState ? (
                     <>
                       <p>
                         Session ID{' '}
-                        <span className='text-foreground break-all'>{activeOauthState}</span>
+                        <span className='text-foreground break-all'>{model.activeOauthState}</span>
                       </p>
                       <p>
-                        Status <span className='text-foreground'>{activeOauthStatusSummary}</span>
+                        Status{' '}
+                        <span className='text-foreground'>{model.activeOauthStatusSummary}</span>
                       </p>
-                      {zedLoginStatus.data?.filename ? (
+                      {model.zed.statusData?.filename ? (
                         <p>
                           Auth file{' '}
                           <span className='text-foreground break-all'>
-                            {zedLoginStatus.data.filename}
+                            {model.zed.statusData.filename}
                           </span>
                         </p>
                       ) : null}
-                      {zedLoginStatus.data?.user_id ? (
+                      {model.zed.statusData?.user_id ? (
                         <p>
                           User ID{' '}
                           <span className='text-foreground break-all'>
-                            {zedLoginStatus.data.user_id}
+                            {model.zed.statusData.user_id}
                           </span>
                         </p>
                       ) : null}
@@ -932,8 +550,8 @@ export function AddAccountPage() {
                   ) : (
                     <p>No sign-in session started yet.</p>
                   )}
-                  {zedLoginStatus.error ? (
-                    <p className='text-destructive mt-2'>{zedLoginStatus.error.message}</p>
+                  {model.zed.statusError ? (
+                    <p className='text-destructive mt-2'>{model.zed.statusError.message}</p>
                   ) : null}
                 </div>
               </section>
@@ -952,11 +570,11 @@ export function AddAccountPage() {
                   <span className='text-sm font-medium'>Account name</span>
                   <Input
                     type='text'
-                    value={copilotLabel}
-                    onChange={(event) => setCopilotLabel(event.target.value)}
+                    value={model.copilot.label}
+                    onChange={(event) => model.copilot.setLabel(event.target.value)}
                     className='h-11 rounded-2xl'
                     placeholder='e.g. Copilot personal account'
-                    maxLength={MAX_LABEL_LENGTH}
+                    maxLength={limits.maxLabelLength}
                   />
                   <span className='text-muted-foreground text-xs'>
                     Only used to identify this account in the dashboard. You can leave it empty.
@@ -965,57 +583,40 @@ export function AddAccountPage() {
                 <div className='flex justify-end'>
                   <Button
                     type='button'
-                    onClick={() =>
-                      startOAuth.mutate(
-                        {
-                          provider: 'github-copilot',
-                          label: copilotLabel.trim() || undefined,
-                        },
-                        {
-                          onSuccess: (data) => {
-                            setOauthStates((prev) => ({
-                              ...prev,
-                              'github-copilot': data.state,
-                            }))
-                            setCopilotUserCode(data.user_code ?? '')
-                            setCopilotVerificationUri(data.verification_uri ?? '')
-                            setCopilotExpiresIn(data.expires_in)
-                            toastSuccess(
-                              'GitHub Copilot sign-in started',
-                              'Open GitHub and enter the device code.',
-                            )
-                          },
-                          onError: (error) => {
-                            toastError('Could not start GitHub Copilot sign-in', error.message)
-                          },
-                        },
-                      )
-                    }
-                    disabled={startOAuth.isPending}
+                    onClick={model.copilot.startOauth}
+                    disabled={model.copilot.isStartingOauth}
                     className='h-11 rounded-full px-5'
                   >
-                    {startOAuth.isPending ? 'Starting…' : 'Start OAuth'}
+                    {model.copilot.isStartingOauth ? 'Starting…' : 'Start OAuth'}
                   </Button>
                 </div>
 
-                {copilotUserCode ? (
+                {model.copilot.userCode ? (
                   <div className='dashboard-panel space-y-3 rounded-2xl p-4'>
                     <p className='text-muted-foreground text-sm'>Enter this code on GitHub:</p>
                     <Input
-                      value={copilotUserCode}
+                      value={model.copilot.userCode}
                       readOnly
                       className='h-11 rounded-2xl text-center font-mono text-lg font-semibold'
                     />
-                    <Input value={copilotVerificationUri} readOnly className='h-11 rounded-2xl' />
-                    {copilotExpiryHint ? (
-                      <p className='text-muted-foreground text-sm'>{copilotExpiryHint}</p>
+                    <Input
+                      value={model.copilot.verificationUri}
+                      readOnly
+                      className='h-11 rounded-2xl'
+                    />
+                    {model.copilot.expiryHint ? (
+                      <p className='text-muted-foreground text-sm'>{model.copilot.expiryHint}</p>
                     ) : null}
                     <div className='flex justify-end'>
                       <Button
                         type='button'
                         variant='outline'
                         onClick={() =>
-                          window.open(copilotVerificationUri, '_blank', 'noopener,noreferrer')
+                          window.open(
+                            model.copilot.verificationUri,
+                            '_blank',
+                            'noopener,noreferrer',
+                          )
                         }
                         className='rounded-full px-5'
                       >
@@ -1026,21 +627,22 @@ export function AddAccountPage() {
                 ) : null}
 
                 <div className='dashboard-panel text-muted-foreground rounded-2xl p-4 text-sm leading-6'>
-                  {activeOauthState ? (
+                  {model.activeOauthState ? (
                     <>
                       <p>
                         Session ID{' '}
-                        <span className='text-foreground break-all'>{activeOauthState}</span>
+                        <span className='text-foreground break-all'>{model.activeOauthState}</span>
                       </p>
                       <p>
-                        Status <span className='text-foreground'>{activeOauthStatusSummary}</span>
+                        Status{' '}
+                        <span className='text-foreground'>{model.activeOauthStatusSummary}</span>
                       </p>
                     </>
                   ) : (
                     <p>No sign-in session started yet.</p>
                   )}
-                  {activeOauthStatusData?.error ? (
-                    <p className='text-destructive mt-2'>{activeOauthStatusData.error}</p>
+                  {model.activeOauthStatusData?.error ? (
+                    <p className='text-destructive mt-2'>{model.activeOauthStatusData.error}</p>
                   ) : null}
                 </div>
               </section>
@@ -1049,7 +651,7 @@ export function AddAccountPage() {
         </section>
 
         <section className='space-y-3'>
-          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+          <Collapsible open={model.manual.showAdvanced} onOpenChange={model.manual.setShowAdvanced}>
             <div className='flex items-center justify-between gap-3'>
               <div>
                 <h3 className='text-base font-semibold'>Manual recovery</h3>
@@ -1059,7 +661,7 @@ export function AddAccountPage() {
               </div>
               <CollapsibleTrigger asChild>
                 <Button type='button' variant='outline' className='rounded-full px-5'>
-                  {showAdvanced ? 'Hide' : 'Show'}
+                  {model.manual.showAdvanced ? 'Hide' : 'Show'}
                 </Button>
               </CollapsibleTrigger>
             </div>
@@ -1069,103 +671,39 @@ export function AddAccountPage() {
                 <Input
                   type='file'
                   accept='.json,application/json'
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0]
-                    event.currentTarget.value = ''
-
-                    if (!file) return
-                    if (file.size > MAX_UPLOAD_FILE_SIZE) {
-                      setUploadFileError('JSON file too large. Max 1 MB.')
-                      toastError('JSON file too large', 'Max 1 MB.')
-                      return
-                    }
-
-                    setUploadFileError(null)
-
-                    try {
-                      const body = await file.text()
-                      const nextName = file.name.slice(0, MAX_UPLOAD_NAME_LENGTH)
-                      const nextBody = body.slice(0, MAX_UPLOAD_BODY_LENGTH)
-                      setUploadName(nextName)
-                      setUploadBody(nextBody)
-                      setUploadFileError(
-                        body.length > MAX_UPLOAD_BODY_LENGTH
-                          ? `File truncated to ${MAX_UPLOAD_BODY_LENGTH.toLocaleString()} characters.`
-                          : null,
-                      )
-                      if (body.length > MAX_UPLOAD_BODY_LENGTH) {
-                        toastInfo(
-                          'File truncated',
-                          `Limited to ${MAX_UPLOAD_BODY_LENGTH.toLocaleString()} characters.`,
-                        )
-                      }
-
-                      if (nextName.trim().length === 0 || nextBody.trim().length === 0) {
-                        setUploadFileError('Selected JSON file is empty.')
-                        toastError('Selected JSON file is empty')
-                        return
-                      }
-
-                      uploadAuthFile.mutate(
-                        { name: nextName.trim(), body: nextBody.trim() },
-                        {
-                          onSuccess: () => {
-                            toastSuccess('Auth file uploaded', 'Open Accounts to review it.')
-                          },
-                          onError: (error) => {
-                            toastError('Failed to upload auth file', error.message)
-                          },
-                        },
-                      )
-                    } catch {
-                      setUploadFileError('Failed to read selected JSON file.')
-                      toastError('Failed to read selected JSON file')
-                    }
-                  }}
+                  onChange={model.manual.handleUploadFileChange}
                   className='h-11 rounded-2xl file:mr-4 file:border-0 file:bg-transparent file:text-sm file:font-medium'
                 />
-                {uploadFileError ? (
-                  <p className='text-destructive text-sm'>{uploadFileError}</p>
+                {model.manual.uploadFileError ? (
+                  <p className='text-destructive text-sm'>{model.manual.uploadFileError}</p>
                 ) : null}
                 <Input
                   type='text'
-                  value={uploadName}
-                  onChange={(event) => setUploadName(event.target.value)}
+                  value={model.manual.uploadName}
+                  onChange={(event) => model.manual.setUploadName(event.target.value)}
                   className='h-11 rounded-2xl'
                   placeholder='auth-file.json'
-                  maxLength={MAX_UPLOAD_NAME_LENGTH}
+                  maxLength={limits.maxUploadNameLength}
                 />
                 <Textarea
-                  value={uploadBody}
-                  onChange={(event) => setUploadBody(event.target.value)}
+                  value={model.manual.uploadBody}
+                  onChange={(event) => model.manual.setUploadBody(event.target.value)}
                   className='min-h-40 rounded-2xl px-4 py-3'
                   placeholder='{"type":"antigravity"}'
-                  maxLength={MAX_UPLOAD_BODY_LENGTH}
+                  maxLength={limits.maxUploadBodyLength}
                 />
                 <div>
                   <Button
                     type='button'
-                    onClick={() =>
-                      uploadAuthFile.mutate(
-                        { name: uploadName.trim(), body: uploadBody.trim() },
-                        {
-                          onSuccess: () => {
-                            toastSuccess('Auth file uploaded', 'Open Accounts to review it.')
-                          },
-                          onError: (error) => {
-                            toastError('Failed to upload auth file', error.message)
-                          },
-                        },
-                      )
-                    }
+                    onClick={model.manual.submitUpload}
                     disabled={
-                      uploadAuthFile.isPending ||
-                      uploadName.trim().length === 0 ||
-                      uploadBody.trim().length === 0
+                      model.manual.isUploading ||
+                      model.manual.uploadName.trim().length === 0 ||
+                      model.manual.uploadBody.trim().length === 0
                     }
                     className='h-11 rounded-full px-5'
                   >
-                    {uploadAuthFile.isPending ? 'Uploading…' : 'Upload auth file'}
+                    {model.manual.isUploading ? 'Uploading…' : 'Upload auth file'}
                   </Button>
                 </div>
               </div>
