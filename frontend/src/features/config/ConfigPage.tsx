@@ -1,14 +1,10 @@
 import { Copy } from 'lucide-react'
-import { useMemo, useState } from 'react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import {
   stackoverflowDark,
   stackoverflowLight,
 } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 
-import { useConfigQuery } from '@/apis/dashboard/queries'
-import { useThemeStore } from '@/app/theme'
-import { toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/PageShell'
 import { QueryState } from '@/components/shared/QueryState'
 import { statusTone } from '@/components/shared/status_tone'
@@ -16,7 +12,8 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
 
-import type { BoolPillProps, ConfigFormatMode } from './types'
+import { useConfigModel } from './hooks/useConfigModel'
+import type { BoolPillProps } from './types'
 
 function BoolPill({ value }: BoolPillProps) {
   return (
@@ -28,70 +25,9 @@ function BoolPill({ value }: BoolPillProps) {
   )
 }
 
-const CODE_THEME_OVERRIDES = {
-  background: 'transparent',
-  padding: 0,
-  margin: 0,
-  fontSize: '0.875rem',
-  lineHeight: '1.6',
-} as const
-
-function toYamlLines(value: unknown, indent = 0): string[] {
-  const prefix = '  '.repeat(indent)
-
-  if (Array.isArray(value)) {
-    if (value.length === 0) return [`${prefix}[]`]
-
-    return value.flatMap((item) => {
-      if (item && typeof item === 'object') {
-        const nested = toYamlLines(item, indent + 1)
-        const [first, ...rest] = nested
-        return [`${prefix}- ${first.trimStart()}`, ...rest]
-      }
-
-      return [`${prefix}- ${String(item)}`]
-    })
-  }
-
-  if (value && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>)
-    if (entries.length === 0) return [`${prefix}{}`]
-
-    return entries.flatMap(([key, nested]) => {
-      if (nested && typeof nested === 'object') {
-        return [`${prefix}${key}:`, ...toYamlLines(nested, indent + 1)]
-      }
-
-      return [`${prefix}${key}: ${String(nested)}`]
-    })
-  }
-
-  return [`${prefix}${String(value)}`]
-}
-
-async function copyRawConfig(value: string) {
-  await navigator.clipboard.writeText(value)
-  toastSuccess('Config copied', 'Raw config copied to clipboard.')
-}
-
 export function ConfigPage() {
-  const config = useConfigQuery()
-  const resolvedTheme = useThemeStore((state) => state.resolvedTheme)
-  const [format, setFormat] = useState<ConfigFormatMode>('structured')
-
-  const rawJson = useMemo(() => {
-    if (!config.data) return ''
-    return JSON.stringify(config.data, null, 2)
-  }, [config.data])
-
-  const rawYaml = useMemo(() => {
-    if (!config.data) return ''
-    return toYamlLines(config.data).join('\n')
-  }, [config.data])
-
-  const providerNames = config.data?.provider_names ?? []
-  const hasProviders = providerNames.length > 0
-  const codeTheme = resolvedTheme === 'dark' ? stackoverflowDark : stackoverflowLight
+  const model = useConfigModel()
+  const codeTheme = model.resolvedTheme === 'dark' ? stackoverflowDark : stackoverflowLight
 
   return (
     <PageShell
@@ -104,8 +40,8 @@ export function ConfigPage() {
             <Button
               key={value}
               type='button'
-              variant={format === value ? 'default' : 'ghost'}
-              onClick={() => setFormat(value)}
+              variant={model.format === value ? 'default' : 'ghost'}
+              onClick={() => model.setFormat(value)}
               className='h-10 rounded-xl px-4 capitalize'
             >
               {value}
@@ -115,12 +51,12 @@ export function ConfigPage() {
       }
     >
       <QueryState
-        isLoading={config.isLoading}
-        isError={config.isError}
-        error={config.error as Error | null}
+        isLoading={model.config.isLoading}
+        isError={model.config.isError}
+        error={model.config.error as Error | null}
       >
-        {config.data ? (
-          format === 'structured' ? (
+        {model.config.data ? (
+          model.format === 'structured' ? (
             <div className='space-y-6'>
               <section className='dashboard-panel rounded-3xl p-5 md:p-6'>
                 <div className='grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start'>
@@ -129,21 +65,25 @@ export function ConfigPage() {
                       Runtime Endpoint
                     </p>
                     <h3 className='mt-2 text-2xl font-semibold tracking-[-0.03em] break-all'>
-                      {config.data.listen_addr}
+                      {model.config.data.listen_addr}
                     </h3>
                     <p className='text-muted-foreground mt-2 text-sm leading-6'>
-                      {config.data.host || 'All interfaces'} · port {config.data.port} ·{' '}
-                      {config.data.routing_strategy}
+                      {model.config.data.host || 'All interfaces'} · port {model.config.data.port} ·{' '}
+                      {model.config.data.routing_strategy}
                     </p>
                   </div>
                   <div className='grid grid-cols-2 gap-3'>
                     <div className='border-border bg-muted/25 rounded-2xl border p-4'>
                       <p className='text-muted-foreground text-xs'>Providers</p>
-                      <p className='mt-2 text-3xl font-semibold'>{config.data.provider_count}</p>
+                      <p className='mt-2 text-3xl font-semibold'>
+                        {model.config.data.provider_count}
+                      </p>
                     </div>
                     <div className='border-border bg-muted/25 rounded-2xl border p-4'>
                       <p className='text-muted-foreground text-xs'>API keys</p>
-                      <p className='mt-2 text-3xl font-semibold'>{config.data.api_key_count}</p>
+                      <p className='mt-2 text-3xl font-semibold'>
+                        {model.config.data.api_key_count}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -159,9 +99,9 @@ export function ConfigPage() {
                   </div>
                   <dl className='divide-border divide-y text-sm'>
                     {[
-                      ['Auth dir', config.data.auth_dir || '(default)'],
-                      ['Request retry', config.data.request_retry],
-                      ['OAuth alias rules', `${config.data.oauth_alias_count}`],
+                      ['Auth dir', model.config.data.auth_dir || '(default)'],
+                      ['Request retry', model.config.data.request_retry],
+                      ['OAuth alias rules', `${model.config.data.oauth_alias_count}`],
                     ].map(([label, value]) => (
                       <div key={label} className='flex items-center justify-between gap-4 p-4'>
                         <dt className='text-muted-foreground'>{label}</dt>
@@ -171,19 +111,19 @@ export function ConfigPage() {
                     <div className='flex items-center justify-between gap-4 p-4'>
                       <dt className='text-muted-foreground'>Debug</dt>
                       <dd>
-                        <BoolPill value={config.data.debug} />
+                        <BoolPill value={model.config.data.debug} />
                       </dd>
                     </div>
                     <div className='flex items-center justify-between gap-4 p-4'>
                       <dt className='text-muted-foreground'>Management API</dt>
                       <dd>
-                        <BoolPill value={config.data.management.enabled} />
+                        <BoolPill value={model.config.data.management.enabled} />
                       </dd>
                     </div>
                     <div className='flex items-center justify-between gap-4 p-4'>
                       <dt className='text-muted-foreground'>Remote management</dt>
                       <dd>
-                        <BoolPill value={config.data.management.allow_remote} />
+                        <BoolPill value={model.config.data.management.allow_remote} />
                       </dd>
                     </div>
                   </dl>
@@ -199,12 +139,14 @@ export function ConfigPage() {
                         </p>
                       </div>
                       <Badge variant='outline' className='w-fit rounded-full px-3 py-1 text-xs'>
-                        {hasProviders ? `${providerNames.length} configured` : 'No providers'}
+                        {model.hasProviders
+                          ? `${model.providerNames.length} configured`
+                          : 'No providers'}
                       </Badge>
                     </div>
-                    {hasProviders ? (
+                    {model.hasProviders ? (
                       <div className='mt-4 flex flex-wrap gap-2'>
-                        {providerNames.map((name) => (
+                        {model.providerNames.map((name) => (
                           <Badge key={name} variant='outline' className='rounded-full px-3 py-1'>
                             {name}
                           </Badge>
@@ -223,10 +165,10 @@ export function ConfigPage() {
                     </div>
                     <div className='divide-border grid sm:grid-cols-2 sm:divide-x'>
                       {[
-                        ['Gemini', config.data.gemini_api_keys.length],
-                        ['Codex', config.data.codex_api_keys.length],
-                        ['Claude', config.data.claude_api_keys.length],
-                        ['OpenAI-compatible', config.data.openai_compat.length],
+                        ['Gemini', model.config.data.gemini_api_keys.length],
+                        ['Codex', model.config.data.codex_api_keys.length],
+                        ['Claude', model.config.data.claude_api_keys.length],
+                        ['OpenAI-compatible', model.config.data.openai_compat.length],
                       ].map(([label, value]) => (
                         <div key={label} className='border-border border-b p-4 last:border-b-0'>
                           <p className='text-muted-foreground text-sm'>{label}</p>
@@ -243,25 +185,29 @@ export function ConfigPage() {
               <CardContent className='px-5 py-3 md:px-6 md:py-3'>
                 <div className='mb-1.5 flex items-center justify-between gap-3'>
                   <p className='text-muted-foreground text-sm'>
-                    Raw {format.toUpperCase()} view of the current runtime snapshot.
+                    Raw {model.format.toUpperCase()} view of the current runtime snapshot.
                   </p>
                   <Button
                     type='button'
                     variant='outline'
                     size='icon'
-                    onClick={() => void copyRawConfig(format === 'json' ? rawJson : rawYaml)}
+                    onClick={() =>
+                      void model.copyRawConfig(
+                        model.format === 'json' ? model.rawJson : model.rawYaml,
+                      )
+                    }
                     className='h-9 w-9 rounded-xl'
-                    title={`Copy ${format.toUpperCase()}`}
+                    title={`Copy ${model.format.toUpperCase()}`}
                   >
                     <Copy className='size-4' />
-                    <span className='sr-only'>Copy {format.toUpperCase()}</span>
+                    <span className='sr-only'>Copy {model.format.toUpperCase()}</span>
                   </Button>
                 </div>
                 <div className='border-border bg-muted/20 max-h-[min(65vh,44rem)] overflow-auto rounded-2xl border px-4 py-3'>
                   <SyntaxHighlighter
-                    language={format}
+                    language={model.format}
                     style={codeTheme}
-                    customStyle={CODE_THEME_OVERRIDES}
+                    customStyle={model.codeThemeOverrides}
                     codeTagProps={{
                       className: 'font-mono',
                     }}
@@ -275,7 +221,7 @@ export function ConfigPage() {
                       textAlign: 'right',
                     }}
                   >
-                    {format === 'json' ? rawJson : rawYaml}
+                    {model.format === 'json' ? model.rawJson : model.rawYaml}
                   </SyntaxHighlighter>
                 </div>
               </CardContent>

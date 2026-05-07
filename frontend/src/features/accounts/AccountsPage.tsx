@@ -1,10 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
 
-import { useDeleteAuthFileMutation, useManagementAuthFilesQuery } from '@/apis/auth/files/api'
-import type { ManagementAuthFile } from '@/apis/auth/files/types'
-import { toastError, toastSuccess } from '@/components/feedback/toast'
 import { PageShell } from '@/components/layout/PageShell'
 import { QueryState } from '@/components/shared/QueryState'
 import { statusTone } from '@/components/shared/status_tone'
@@ -29,68 +25,11 @@ import {
   SelectValue,
 } from '@/components/ui/Select'
 
-import type { ProviderGroup } from './types'
-
-const ALL_FILTER = 'all'
-const STATUS_OPTIONS = ['active', 'refreshing', 'pending', 'error', 'disabled', 'unknown'] as const
-
-function providerLabel(key: string) {
-  if (key === 'kiro') return 'Kiro'
-  if (key === 'antigravity') return 'Antigravity'
-  if (key === 'zed') return 'Zed'
-  if (key === 'codex') return 'Codex'
-  if (key === 'github-copilot') return 'GitHub Copilot'
-  return key
-}
+import { useAccountsModel } from './hooks/useAccountsModel'
 
 export function AccountsPage() {
   const navigate = useNavigate()
-  const accounts = useManagementAuthFilesQuery()
-  const deleteAuthFile = useDeleteAuthFileMutation()
-
-  const [providerFilter, setProviderFilter] = useState(ALL_FILTER)
-  const [statusFilter, setStatusFilter] = useState(ALL_FILTER)
-  const [deleteTarget, setDeleteTarget] = useState<ManagementAuthFile | null>(null)
-
-  const sourceItems = useMemo(() => accounts.data?.['auth-files'] ?? [], [accounts.data])
-
-  const items = useMemo(
-    () =>
-      [...sourceItems]
-        .filter((item) => providerFilter === ALL_FILTER || item.provider_key === providerFilter)
-        .filter((item) => statusFilter === ALL_FILTER || item.status === statusFilter)
-        .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)),
-    [sourceItems, providerFilter, statusFilter],
-  )
-
-  const providerGroups = useMemo<ProviderGroup[]>(() => {
-    const map = new Map<string, ManagementAuthFile[]>()
-
-    for (const item of items) {
-      const existing = map.get(item.provider_key) ?? []
-      existing.push(item)
-      map.set(item.provider_key, existing)
-    }
-
-    return [...map.entries()].map(([key, groupedItems]) => ({
-      key,
-      label: providerLabel(key),
-      items: groupedItems,
-    }))
-  }, [items])
-
-  const providerOptions = useMemo(
-    () => [...new Set(sourceItems.map((item) => item.provider_key))],
-    [sourceItems],
-  )
-
-  const totalAccounts = sourceItems.length
-  const visibleAccounts = items.length
-  const activeAccounts = sourceItems.filter((item) => item.status === 'active').length
-  const issueAccounts = sourceItems.filter(
-    (item) => item.status === 'error' || item.status === 'unknown',
-  ).length
-  const hasItems = items.length > 0
+  const model = useAccountsModel()
 
   return (
     <PageShell
@@ -108,16 +47,16 @@ export function AccountsPage() {
       }
     >
       <QueryState
-        isLoading={accounts.isLoading}
-        isError={accounts.isError}
-        error={accounts.error as Error | null}
+        isLoading={model.accounts.isLoading}
+        isError={model.accounts.isError}
+        error={model.accounts.error as Error | null}
       >
-        {accounts.data ? (
+        {model.accounts.data ? (
           <>
             <AlertDialog
-              open={deleteTarget !== null}
+              open={model.deleteTarget !== null}
               onOpenChange={(open) => {
-                if (!open) setDeleteTarget(null)
+                if (!open) model.setDeleteTarget(null)
               }}
             >
               <AlertDialogContent className='rounded-3xl'>
@@ -127,8 +66,8 @@ export function AccountsPage() {
                   </AlertDialogMedia>
                   <AlertDialogTitle>Delete account?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    {deleteTarget
-                      ? `This removes ${deleteTarget.id}. This action cannot be undone.`
+                    {model.deleteTarget
+                      ? `This removes ${model.deleteTarget.id}. This action cannot be undone.`
                       : 'This action cannot be undone.'}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
@@ -137,20 +76,7 @@ export function AccountsPage() {
                   <AlertDialogAction
                     variant='destructive'
                     className='rounded-full px-5'
-                    onClick={() => {
-                      if (!deleteTarget) return
-                      const target = deleteTarget
-                      deleteAuthFile.mutate(target.id, {
-                        onSuccess: () => {
-                          toastSuccess('Account deleted', target.id)
-                          setDeleteTarget(null)
-                        },
-                        onError: (error) => {
-                          toastError('Failed to delete account', error.message)
-                          setDeleteTarget(null)
-                        },
-                      })
-                    }}
+                    onClick={model.confirmDelete}
                   >
                     Delete
                   </AlertDialogAction>
@@ -161,10 +87,10 @@ export function AccountsPage() {
             <div className='space-y-6'>
               <section className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
                 {[
-                  ['Total', totalAccounts],
-                  ['Visible', visibleAccounts],
-                  ['Active', activeAccounts],
-                  ['Issues', issueAccounts],
+                  ['Total', model.totalAccounts],
+                  ['Visible', model.visibleAccounts],
+                  ['Active', model.activeAccounts],
+                  ['Issues', model.issueAccounts],
                 ].map(([label, value]) => (
                   <div key={label} className='dashboard-panel rounded-3xl p-4'>
                     <p className='text-muted-foreground text-xs tracking-[0.18em] uppercase'>
@@ -180,15 +106,15 @@ export function AccountsPage() {
                   <div className='flex flex-1 flex-wrap items-end gap-3'>
                     <label className='space-y-2'>
                       <span className='text-muted-foreground text-sm'>Provider</span>
-                      <Select value={providerFilter} onValueChange={setProviderFilter}>
+                      <Select value={model.providerFilter} onValueChange={model.setProviderFilter}>
                         <SelectTrigger className='bg-muted/35 h-11 min-w-44 rounded-2xl border-0 focus-visible:border-0'>
                           <SelectValue placeholder='All providers' />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={ALL_FILTER}>All providers</SelectItem>
-                          {providerOptions.map((provider) => (
+                          <SelectItem value={model.filters.all}>All providers</SelectItem>
+                          {model.providerOptions.map((provider) => (
                             <SelectItem key={provider} value={provider}>
-                              {providerLabel(provider)}
+                              {model.providerLabel(provider)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -197,13 +123,13 @@ export function AccountsPage() {
 
                     <label className='space-y-2'>
                       <span className='text-muted-foreground text-sm'>Status</span>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <Select value={model.statusFilter} onValueChange={model.setStatusFilter}>
                         <SelectTrigger className='bg-muted/35 h-11 min-w-40 rounded-2xl border-0 focus-visible:border-0'>
                           <SelectValue placeholder='All statuses' />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={ALL_FILTER}>All statuses</SelectItem>
-                          {STATUS_OPTIONS.map((status) => (
+                          <SelectItem value={model.filters.all}>All statuses</SelectItem>
+                          {model.filters.statusOptions.map((status) => (
                             <SelectItem key={status} value={status}>
                               {status}
                             </SelectItem>
@@ -212,14 +138,12 @@ export function AccountsPage() {
                       </Select>
                     </label>
 
-                    {providerFilter !== ALL_FILTER || statusFilter !== ALL_FILTER ? (
+                    {model.providerFilter !== model.filters.all ||
+                    model.statusFilter !== model.filters.all ? (
                       <Button
                         type='button'
                         variant='outline'
-                        onClick={() => {
-                          setProviderFilter(ALL_FILTER)
-                          setStatusFilter(ALL_FILTER)
-                        }}
+                        onClick={model.clearFilters}
                         className='h-11 rounded-full px-5'
                       >
                         Clear
@@ -228,12 +152,13 @@ export function AccountsPage() {
                   </div>
 
                   <p className='text-muted-foreground text-sm'>
-                    {visibleAccounts} of {totalAccounts} account{totalAccounts === 1 ? '' : 's'}
+                    {model.visibleAccounts} of {model.totalAccounts} account
+                    {model.totalAccounts === 1 ? '' : 's'}
                   </p>
                 </div>
               </section>
 
-              {!hasItems ? (
+              {!model.hasItems ? (
                 <section className='dashboard-panel rounded-3xl p-8 text-center'>
                   <Badge variant='outline' className='mb-4 rounded-full'>
                     No accounts found
@@ -253,7 +178,7 @@ export function AccountsPage() {
               ) : null}
 
               <section className='space-y-4'>
-                {providerGroups.map((group) => (
+                {model.providerGroups.map((group) => (
                   <div key={group.key} className='dashboard-panel overflow-hidden rounded-3xl'>
                     <div className='border-border flex items-center justify-between gap-3 border-b p-5'>
                       <div>
@@ -290,7 +215,7 @@ export function AccountsPage() {
                             type='button'
                             variant='outline'
                             size='icon'
-                            onClick={() => setDeleteTarget(item)}
+                            onClick={() => model.setDeleteTarget(item)}
                             className='h-9 w-9 rounded-xl'
                             title='Delete account'
                           >
