@@ -63,7 +63,7 @@ export function useAddAccountBase() {
     'github-copilot': copilotOauthStatus,
   } as const
 
-  const activeOauthState = provider === 'zed' ? zedSessionId : oauthStates[provider] ?? null
+  const activeOauthState = provider === 'zed' ? zedSessionId : (oauthStates[provider] ?? null)
   const activeOauthStatus = provider === 'zed' ? null : oauthStatusByProvider[provider]
   const activeOauthStatusData = activeOauthStatus?.data
   const activeOauthStatusSummary =

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useStartZedLoginMutation } from '@/apis/auth/zed/api'
 import type { ZedLoginStatusResponse } from '@/apis/auth/zed/types'
 import { toastError, toastSuccess } from '@/components/feedback/toast'
+
 import type { AddAccountBaseModel } from './useAddAccountBase'
 
 export interface UseZedModelProps {

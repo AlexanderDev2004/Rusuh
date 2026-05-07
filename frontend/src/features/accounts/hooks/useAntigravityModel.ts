@@ -57,11 +57,7 @@ export function useAntigravityModel({ base }: UseAntigravityModelProps): UseAnti
   }
 
   function submitCallback() {
-    const trackedSession = resolveTrackedOauthSession(
-      'antigravity',
-      callbackUrl,
-      base.oauthStates,
-    )
+    const trackedSession = resolveTrackedOauthSession('antigravity', callbackUrl, base.oauthStates)
 
     submitOAuthCallback.mutate(
       {
